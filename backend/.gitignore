@@ -16,3 +16,6 @@ firebase-service-account.json
 
 # OS-specific
 .DS_Store
+
+# Google Cloud credentials
+google-credentials.json
