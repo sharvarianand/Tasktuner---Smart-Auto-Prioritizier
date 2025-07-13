@@ -1,0 +1,19 @@
+{
+  "tasks": [
+    {
+      "title": "Buy groceries",
+      "deadline": "2025-07-15",
+      "priority": 2
+    },
+    {
+      "title": "Finish project report", 
+      "deadline": "2025-07-14",
+      "priority": 1
+    },
+    {
+      "title": "Call doctor",
+      "deadline": "2025-07-16", 
+      "priority": 3
+    }
+  ]
+}

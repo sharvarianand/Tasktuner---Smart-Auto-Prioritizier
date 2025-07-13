@@ -1,9 +1,8 @@
-const express = require('express');
+// src/routes/aiRoutes.js
+const express = require("express");
 const router = express.Router();
+const aiController = require("../controllers/aiController");
 
-// Example AI route
-router.post('/generate', (req, res) => {
-  res.send('AI response placeholder');
-});
+router.post("/prioritize", aiController.prioritizeTasks);
 
 module.exports = router;
