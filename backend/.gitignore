@@ -19,3 +19,10 @@ firebase-service-account.json
 
 # Google Cloud credentials
 google-credentials.json
+src/config/google-credentials.json
+**/google-credentials.json
+
+# Google OAuth tokens
+tokens.json
+src/config/tokens.json
+**/tokens.json
