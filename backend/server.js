@@ -4,6 +4,7 @@ require('dotenv').config();
 
 const taskRoutes = require('./src/routes/taskRoutes');
 const aiRoutes = require('./src/routes/aiRoutes');
+const voiceRoutes = require('./src/routes/voiceRoutes');
 
 const app = express();
 
@@ -11,9 +12,13 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Serve static files from uploads directory
+app.use('/uploads', express.static('uploads'));
+
 // Routes
 app.use('/api/tasks', taskRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/voice', voiceRoutes);
 
 // Health Check Route
 app.get('/', (req, res) => {
