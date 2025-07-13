@@ -1,55 +1,87 @@
 const db = require('../config/firebase');
 
-exports.getTasks = async (req, res) => {
+// ✅ GET all tasks
+const getTasks = async (req, res) => {
   try {
-    const tasksRef = db.collection('tasks');
-    const snapshot = await tasksRef.where('userId', '==', req.auth.userId).get();
-
+    const snapshot = await db.collection("tasks").get();
     const tasks = [];
-    snapshot.forEach(doc => tasks.push({ id: doc.id, ...doc.data() }));
+
+    snapshot.forEach(doc => {
+      tasks.push({ id: doc.id, ...doc.data() });
+    });
+
     res.status(200).json(tasks);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch tasks' });
+    console.error("❌ Error fetching tasks:", error);
+    res.status(500).json({ error: "Failed to fetch tasks" });
   }
 };
 
-exports.createTask = async (req, res) => {
+// ✅ POST create task
+const createTask = async (req, res) => {
   try {
     const { title, description, deadline, priority } = req.body;
 
-    const newTask = {
+    const taskData = {
       title,
       description,
       deadline,
       priority,
-      status: 'pending',
-      userId: req.auth.userId,
+      status: "pending",
       createdAt: new Date().toISOString(),
     };
 
-    const taskRef = await db.collection('tasks').add(newTask);
-    res.status(201).json({ id: taskRef.id, ...newTask });
+    const docRef = await db.collection("tasks").add(taskData);
+
+    res.status(201).json({ id: docRef.id, ...taskData });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to create task' });
+    console.error("❌ Error creating task:", error);
+    res.status(500).json({ error: "Failed to create task" });
   }
 };
 
-exports.updateTask = async (req, res) => {
+// ✅ PUT update task
+const updateTask = async (req, res) => {
   try {
     const taskId = req.params.id;
-    await db.collection('tasks').doc(taskId).update(req.body);
-    res.status(200).json({ message: 'Task updated successfully' });
+    const updatedData = req.body;
+
+    const taskRef = db.collection("tasks").doc(taskId);
+    const doc = await taskRef.get();
+
+    if (!doc.exists) {
+      return res.status(404).json({ error: "Task not found" });
+    }
+
+    await taskRef.update({
+      ...updatedData,
+      updatedAt: new Date().toISOString(),
+    });
+
+    res.status(200).json({ message: "Task updated successfully" });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to update task' });
+    console.error("❌ Error updating task:", error);
+    res.status(500).json({ error: "Failed to update task" });
   }
 };
 
-exports.deleteTask = async (req, res) => {
+// ✅ DELETE task
+const deleteTask = async (req, res) => {
   try {
     const taskId = req.params.id;
-    await db.collection('tasks').doc(taskId).delete();
-    res.status(200).json({ message: 'Task deleted successfully' });
+
+    await db.collection("tasks").doc(taskId).delete();
+
+    res.status(200).json({ message: "Task deleted successfully" });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to delete task' });
+    console.error("❌ Error deleting task:", error);
+    res.status(500).json({ error: "Failed to delete task" });
   }
+};
+
+module.exports = {
+  getTasks,
+  createTask,
+  updateTask,
+  deleteTask,
 };

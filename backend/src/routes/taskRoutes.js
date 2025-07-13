@@ -1,21 +1,22 @@
 const express = require('express');
 const router = express.Router();
+
 const taskController = require('../controllers/taskController');
-const requireAuth = require('../middleware/authMiddleware');
+// const requireAuth = require('../middleware/authMiddleware'); // 🔐 Optional Clerk auth
 
-// Protect all task routes
-router.use(requireAuth);
+// 🔐 Protect all task routes (enable when auth is ready)
+// router.use(requireAuth);
 
-// GET all tasks
+// 📄 GET all tasks
 router.get('/', taskController.getTasks);
 
-// POST new task
+// ➕ POST new task
 router.post('/', taskController.createTask);
 
-// PUT update task
+// 🔄 PUT update task by ID
 router.put('/:id', taskController.updateTask);
 
-// DELETE task
+// ❌ DELETE task by ID
 router.delete('/:id', taskController.deleteTask);
 
 module.exports = router;
