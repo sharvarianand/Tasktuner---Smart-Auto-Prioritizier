@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "@clerk/nextjs": "^6.25.0"
+    "@clerk/nextjs": "^6.25.0",
+    "react-hot-toast": "^2.5.2"
   }
 }
-
