@@ -1,24 +1,9 @@
 
-import { useState, useEffect } from 'react';
 import Loader from '../../components/Loader';
-
-// Mock fetch function (replace with real API call)
-const fetchStats = async () => [
-  { label: 'Tasks Completed', value: 12 },
-  { label: 'Goals Achieved', value: 2 },
-  { label: 'Events Scheduled', value: 5 },
-];
+import useAnalytics from '../../hooks/useAnalytics';
 
 export default function AnalyticsPage() {
-  const [stats, setStats] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchStats().then(data => {
-      setStats(data);
-      setLoading(false);
-    });
-  }, []);
+  const { stats, loading } = useAnalytics();
 
   return (
     <div className="max-w-2xl mx-auto mt-8">
