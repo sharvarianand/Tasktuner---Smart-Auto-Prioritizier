@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from 'react';
+import Loader from '../../components/Loader';
 
 // Mock fetch function (replace with real API call)
 const fetchEvents = async () => [
@@ -22,7 +23,7 @@ export default function CalendarPage() {
     <div className="max-w-2xl mx-auto mt-8">
       <h2 className="text-xl font-bold mb-4">Calendar</h2>
       {loading ? (
-        <div>Loading events...</div>
+        <Loader />
       ) : events.length === 0 ? (
         <div>No events scheduled.</div>
       ) : (

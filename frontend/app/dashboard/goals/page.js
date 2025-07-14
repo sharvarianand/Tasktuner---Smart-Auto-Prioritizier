@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { PlusIcon } from '@heroicons/react/24/solid';
+import Modal from '../../components/Modal';
 
 // Mock fetch function (replace with real API call)
 const fetchGoals = async () => [
@@ -12,6 +13,7 @@ export default function GoalsPage() {
   const [goals, setGoals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [newGoal, setNewGoal] = useState('');
+  const [modalOpen, setModalOpen] = useState(false);
 
   useEffect(() => {
     fetchGoals().then(data => {
@@ -27,26 +29,34 @@ export default function GoalsPage() {
       { id: Date.now(), title: newGoal, completed: false }
     ]);
     setNewGoal('');
+    setModalOpen(false);
   };
 
   return (
     <div className="max-w-2xl mx-auto mt-8">
       <h2 className="text-xl font-bold mb-4">Goals</h2>
-      <div className="flex mb-6 gap-2">
+      <button
+        onClick={() => setModalOpen(true)}
+        className="bg-green-500 text-white px-4 py-2 rounded flex items-center gap-1 mb-6"
+      >
+        <PlusIcon className="h-5 w-5" /> Add Goal
+      </button>
+      <Modal open={modalOpen} onClose={() => setModalOpen(false)}>
+        <h3 className="text-lg font-semibold mb-2">Add New Goal</h3>
         <input
           type="text"
           value={newGoal}
           onChange={e => setNewGoal(e.target.value)}
-          placeholder="Add a new goal..."
-          className="flex-1 border rounded px-3 py-2"
+          placeholder="Goal title..."
+          className="w-full border rounded px-3 py-2 mb-4"
         />
         <button
           onClick={handleAddGoal}
-          className="bg-green-500 text-white px-4 py-2 rounded flex items-center gap-1"
+          className="bg-green-500 text-white px-4 py-2 rounded w-full"
         >
-          <PlusIcon className="h-5 w-5" /> Add
+          Add
         </button>
-      </div>
+      </Modal>
       {loading ? (
         <div>Loading goals...</div>
       ) : (

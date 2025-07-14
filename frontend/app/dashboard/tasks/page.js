@@ -1,6 +1,8 @@
 
 import { useState, useEffect } from 'react';
 import { PlusIcon } from '@heroicons/react/24/solid';
+import TaskCard from '../../components/TaskCard';
+import Modal from '../../components/Modal';
 
 // Mock fetch function (replace with real API call)
 const fetchTasks = async () => [
@@ -12,6 +14,7 @@ export default function TasksPage() {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [newTask, setNewTask] = useState('');
+  const [modalOpen, setModalOpen] = useState(false);
 
   useEffect(() => {
     fetchTasks().then(data => {
@@ -27,36 +30,41 @@ export default function TasksPage() {
       { id: Date.now(), title: newTask, completed: false }
     ]);
     setNewTask('');
+    setModalOpen(false);
   };
 
   return (
     <div className="max-w-2xl mx-auto mt-8">
       <h2 className="text-xl font-bold mb-4">Tasks</h2>
-      <div className="flex mb-6 gap-2">
+      <button
+        onClick={() => setModalOpen(true)}
+        className="bg-blue-500 text-white px-4 py-2 rounded flex items-center gap-1 mb-6"
+      >
+        <PlusIcon className="h-5 w-5" /> Add Task
+      </button>
+      <Modal open={modalOpen} onClose={() => setModalOpen(false)}>
+        <h3 className="text-lg font-semibold mb-2">Add New Task</h3>
         <input
           type="text"
           value={newTask}
           onChange={e => setNewTask(e.target.value)}
-          placeholder="Add a new task..."
-          className="flex-1 border rounded px-3 py-2"
+          placeholder="Task title..."
+          className="w-full border rounded px-3 py-2 mb-4"
         />
         <button
           onClick={handleAddTask}
-          className="bg-blue-500 text-white px-4 py-2 rounded flex items-center gap-1"
+          className="bg-blue-500 text-white px-4 py-2 rounded w-full"
         >
-          <PlusIcon className="h-5 w-5" /> Add
+          Add
         </button>
-      </div>
+      </Modal>
       {loading ? (
         <div>Loading tasks...</div>
       ) : (
         <ul className="space-y-3">
           {tasks.map(task => (
-            <li key={task.id} className="flex items-center justify-between bg-white p-4 rounded shadow">
-              <span className={task.completed ? 'line-through text-gray-400' : ''}>{task.title}</span>
-              <span className={task.completed ? 'text-green-500' : 'text-yellow-500'}>
-                {task.completed ? 'Done' : 'Pending'}
-              </span>
+            <li key={task.id}>
+              <TaskCard task={task} />
             </li>
           ))}
         </ul>
