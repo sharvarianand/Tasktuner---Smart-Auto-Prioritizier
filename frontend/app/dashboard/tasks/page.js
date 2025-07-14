@@ -1,36 +1,22 @@
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { PlusIcon } from '@heroicons/react/24/solid';
 import TaskCard from '../../components/TaskCard';
 import Modal from '../../components/Modal';
-
-// Mock fetch function (replace with real API call)
-const fetchTasks = async () => [
-  { id: 1, title: 'Finish hackathon pitch', completed: false },
-  { id: 2, title: 'Sync calendar with Google', completed: true },
-];
+import useTasks from '../../hooks/useTasks';
+import { addTask } from '../../services/taskService';
 
 export default function TasksPage() {
-  const [tasks, setTasks] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { tasks, loading } = useTasks();
   const [newTask, setNewTask] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
 
-  useEffect(() => {
-    fetchTasks().then(data => {
-      setTasks(data);
-      setLoading(false);
-    });
-  }, []);
-
-  const handleAddTask = () => {
+  const handleAddTask = async () => {
     if (!newTask.trim()) return;
-    setTasks(prev => [
-      ...prev,
-      { id: Date.now(), title: newTask, completed: false }
-    ]);
+    await addTask({ title: newTask, completed: false });
     setNewTask('');
     setModalOpen(false);
+    window.location.reload(); // simple refresh to show new task
   };
 
   return (
