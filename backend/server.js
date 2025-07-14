@@ -6,7 +6,7 @@ const taskRoutes = require('./src/routes/taskRoutes');
 const aiRoutes = require('./src/routes/aiRoutes');
 const voiceRoutes = require('./src/routes/voiceRoutes');
 const userRoutes = require("./src/routes/userRoutes");
-
+const analyticsRoutes = require("./src/routes/analyticsRoutes");
 const app = express();
 
 // Middleware
@@ -21,6 +21,7 @@ app.use('/api/tasks', taskRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/voice', voiceRoutes);
 app.use("/api/user", userRoutes);
+app.use("/api/analytics", analyticsRoutes);
 
 // Health Check Route
 app.get('/', (req, res) => {
