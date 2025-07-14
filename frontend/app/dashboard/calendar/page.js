@@ -1,6 +1,6 @@
 
-import { useState, useEffect } from 'react';
 import Loader from '../../components/Loader';
+import useCalendarEvents from '../../hooks/useCalendarEvents';
 
 // Mock fetch function (replace with real API call)
 const fetchEvents = async () => [
@@ -9,15 +9,7 @@ const fetchEvents = async () => [
 ];
 
 export default function CalendarPage() {
-  const [events, setEvents] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchEvents().then(data => {
-      setEvents(data);
-      setLoading(false);
-    });
-  }, []);
+  const { events, loading } = useCalendarEvents();
 
   return (
     <div className="max-w-2xl mx-auto mt-8">
