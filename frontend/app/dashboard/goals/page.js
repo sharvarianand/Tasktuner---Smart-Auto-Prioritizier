@@ -1,35 +1,21 @@
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { PlusIcon } from '@heroicons/react/24/solid';
 import Modal from '../../components/Modal';
-
-// Mock fetch function (replace with real API call)
-const fetchGoals = async () => [
-  { id: 1, title: 'Launch MVP', completed: false },
-  { id: 2, title: 'Get 100 users', completed: false },
-];
+import useGoals from '../../hooks/useGoals';
+import { addGoal } from '../../services/goalService';
 
 export default function GoalsPage() {
-  const [goals, setGoals] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { goals, loading } = useGoals();
   const [newGoal, setNewGoal] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
 
-  useEffect(() => {
-    fetchGoals().then(data => {
-      setGoals(data);
-      setLoading(false);
-    });
-  }, []);
-
-  const handleAddGoal = () => {
+  const handleAddGoal = async () => {
     if (!newGoal.trim()) return;
-    setGoals(prev => [
-      ...prev,
-      { id: Date.now(), title: newGoal, completed: false }
-    ]);
+    await addGoal({ title: newGoal, completed: false });
     setNewGoal('');
     setModalOpen(false);
+    window.location.reload(); // simple refresh to show new goal
   };
 
   return (
