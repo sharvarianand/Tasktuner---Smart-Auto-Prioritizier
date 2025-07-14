@@ -7,6 +7,8 @@ const aiRoutes = require('./src/routes/aiRoutes');
 const voiceRoutes = require('./src/routes/voiceRoutes');
 const userRoutes = require("./src/routes/userRoutes");
 const analyticsRoutes = require("./src/routes/analyticsRoutes");
+const notificationRoutes = require('./src/routes/notificationRoutes');
+
 const app = express();
 
 // Middleware
@@ -22,6 +24,7 @@ app.use('/api/ai', aiRoutes);
 app.use('/api/voice', voiceRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/analytics", analyticsRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Health Check Route
 app.get('/', (req, res) => {
