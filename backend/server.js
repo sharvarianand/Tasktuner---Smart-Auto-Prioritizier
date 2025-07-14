@@ -5,6 +5,7 @@ require('dotenv').config();
 const taskRoutes = require('./src/routes/taskRoutes');
 const aiRoutes = require('./src/routes/aiRoutes');
 const voiceRoutes = require('./src/routes/voiceRoutes');
+const userRoutes = require("./src/routes/userRoutes");
 
 const app = express();
 
@@ -19,6 +20,7 @@ app.use('/uploads', express.static('uploads'));
 app.use('/api/tasks', taskRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/voice', voiceRoutes);
+app.use("/api/user", userRoutes);
 
 // Health Check Route
 app.get('/', (req, res) => {
