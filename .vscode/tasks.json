@@ -1,0 +1,14 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "TaskTuner Frontend Dev Server",
+			"type": "shell",
+			"command": "C:\\Projects\\Tasktuner 2\\tasktuner-frontend\\node_modules\\.bin\\vite.exe",
+			"group": "build",
+			"isBackground": true,
+			"problemMatcher": [],
+			"args": []
+		}
+	]
+}

@@ -1,6 +1,14 @@
 {
+  "name": "tasktuner-2.0",
+  "description": "AI-powered productivity planner - Backend only",
+  "version": "1.0.0",
+  "main": "backend/server.js",
+  "scripts": {
+    "start": "node backend/server.js",
+    "dev": "nodemon backend/server.js"
+  },
   "dependencies": {
-    "@clerk/nextjs": "^6.25.0",
-    "react-hot-toast": "^2.5.2"
-  }
+    "@clerk/clerk-react": "^5.34.0"
+  },
+  "devDependencies": {}
 }
