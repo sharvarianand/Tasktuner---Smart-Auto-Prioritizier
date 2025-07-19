@@ -8,7 +8,10 @@
     "dev": "nodemon backend/server.js"
   },
   "dependencies": {
+    "@clerk/clerk-js": "^5.72.0",
     "@clerk/clerk-react": "^5.34.0"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.11"
+  }
 }
