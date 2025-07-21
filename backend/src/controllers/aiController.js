@@ -1,7 +1,7 @@
 // src/controllers/aiController.js
 const openai = require("../config/openai");
 
-// 🔹 AI: PRIORITIZE TASKS
+//  AI: PRIORITIZE TASKS
 const prioritizeTasks = async (req, res) => {
   try {
     const { tasks } = req.body;
@@ -21,7 +21,7 @@ Tasks:
 ${taskList}
 `;
 
-    console.log('🤖 Calling OpenRouter API...');
+    console.log(' Calling OpenRouter API...');
 
     const response = await openai.chat.completions.create({
       model: "mistralai/mistral-7b-instruct:free",
@@ -30,7 +30,7 @@ ${taskList}
       temperature: 0.7,
     });
 
-    console.log('✅ OpenRouter API success');
+    console.log(' OpenRouter API success');
 
     const aiOutput = response.choices[0].message.content.trim().split('\n');
     res.status(200).json({ prioritizedTasks: aiOutput });

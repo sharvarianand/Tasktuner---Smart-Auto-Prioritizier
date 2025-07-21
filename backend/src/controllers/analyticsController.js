@@ -20,7 +20,7 @@ const getCompletionRate = async (req, res) => {
   }
 };
 
-// ✅ Weekly Performance (tasks completed per day for the past 7 days)
+//  Weekly Performance (tasks completed per day for the past 7 days)
 const getWeeklyPerformance = async (req, res) => {
   const today = new Date();
   const dates = Array.from({ length: 7 }, (_, i) => {
@@ -48,7 +48,7 @@ const getWeeklyPerformance = async (req, res) => {
   }
 };
 
-// ✅ Common Priorities (count of tasks by priority)
+// Common Priorities (count of tasks by priority)
 const getCommonPriorities = async (req, res) => {
   try {
     const snapshot = await db.collection("tasks").get();

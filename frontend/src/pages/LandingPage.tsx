@@ -2,24 +2,23 @@ import { motion } from "framer-motion"
 import { Button } from "../components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { 
-  Zap, 
-  Calendar, 
-  Brain, 
-  Trophy, 
-  Star, 
-  ArrowRight, 
-  CheckCircle, 
+import {
+  Zap,
+  Calendar,
+  Brain,
+  Trophy,
+  Star,
+  ArrowRight,
+  CheckCircle,
   Target,
-  BarChart3,
   Github,
   Twitter,
   Mic,
   Users,
-  Smartphone,
-  ChevronDown
+  
 } from "lucide-react"
 import { useNavigate } from "react-router-dom"
+
 
 const LandingPage = () => {
   const navigate = useNavigate()
@@ -37,7 +36,7 @@ const LandingPage = () => {
     },
     {
       icon: Calendar,
-      title: "Google Calendar Integration", 
+      title: "Google Calendar Integration",
       description: "Seamlessly sync with your calendar and auto-schedule tasks in optimal time slots for balanced execution"
     },
     {
@@ -66,7 +65,7 @@ const LandingPage = () => {
       rating: 5
     },
     {
-      name: "Marcus Rodriguez", 
+      name: "Marcus Rodriguez",
       role: "Product Manager",
       company: "Fortune 500",
       content: "The AI prioritization is incredibly accurate. It knows which tasks matter most before I do.",
@@ -74,7 +73,7 @@ const LandingPage = () => {
     },
     {
       name: "Emily Park",
-      role: "Graduate Student", 
+      role: "Graduate Student",
       company: "MIT",
       content: "Voice input + smart scheduling = game changer. I can capture tasks while walking to class.",
       rating: 5
@@ -83,7 +82,7 @@ const LandingPage = () => {
 
   const stats = [
     { number: "10K+", label: "Active Users" },
-    { number: "500K+", label: "Tasks Completed" }, 
+    { number: "500K+", label: "Tasks Completed" },
     { number: "95%", label: "Productivity Increase" },
     { number: "4.9/5", label: "User Rating" }
   ]
@@ -103,7 +102,7 @@ const LandingPage = () => {
                 <p className="text-xs text-muted-foreground">Savage Productivity</p>
               </div>
             </div>
-            
+
             <div className="hidden md:flex items-center space-x-8">
               <a href="#features" className="text-sm hover:text-primary transition-colors">Features</a>
               <a href="#testimonials" className="text-sm hover:text-primary transition-colors">Reviews</a>
@@ -130,19 +129,19 @@ const LandingPage = () => {
             <Badge className="mb-6 bg-primary/20 text-primary border-primary/30">
               🚀 The AI-Powered Productivity Revolution
             </Badge>
-            
+
             <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
               TaskTuner
             </h1>
-            
+
             <p className="text-xl md:text-2xl text-muted-foreground mb-4">
               The AI-powered productivity app that <span className="text-primary font-semibold">roasts you into action</span>
             </p>
-            
+
             <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
               Smart auto-prioritization meets savage motivation. Let AI organize your chaos while GenZ humor keeps you accountable.
             </p>
-            
+
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
               <Button size="lg" className="text-lg px-8 py-4 startup-glow" onClick={() => navigate('/dashboard')}>
                 Start Being Productive <Zap className="ml-2 h-5 w-5" />
@@ -314,7 +313,7 @@ const LandingPage = () => {
                 <p className="text-xs text-muted-foreground">Savage Productivity</p>
               </div>
             </div>
-            
+
             <div className="flex items-center space-x-6">
               <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
                 <Twitter className="h-5 w-5" />
