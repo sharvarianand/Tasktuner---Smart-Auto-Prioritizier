@@ -1,5 +1,5 @@
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { DashboardLayout } from "@/components/dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
+import { Checkbox } from "@/components/ui/checkbox"
 import { DemoRestrictionBanner, DemoRestrictedButton } from "@/components/demo-restriction"
 import { 
   Select,
@@ -32,12 +33,15 @@ import {
   Mic,
   Flame,
   Star,
-  Filter
+  Filter,
+  RefreshCw,
+  Calendar
 } from "lucide-react"
 import { toast } from "sonner"
+import { taskApi } from "@/lib/api"
 
 interface Task {
-  id: number
+  id: string
   title: string
   description?: string
   priority: 'High' | 'Medium' | 'Low'
@@ -46,108 +50,135 @@ interface Task {
   dueDate?: string
   points: number
   roast?: string
+  isDaily?: boolean
+  completedDates?: string[]
+}
+
+interface UserStats {
+  tasksCompleted: number
+  totalTasks: number
+  currentStreak: number
+  xpEarned: number
+  goalsProgress: number
 }
 
 const Tasks = () => {
-  const [tasks, setTasks] = useState<Task[]>([
-    {
-      id: 1,
-      title: "Complete React Project",
-      description: "Build the TaskTuner frontend",
-      priority: "High",
-      category: "Academic",
-      completed: false,
-      dueDate: "2024-01-20",
-      points: 50,
-      roast: "Still coding at 2 AM? Your coffee addiction isn't a personality trait ☕"
-    },
-    {
-      id: 2,
-      title: "Study for Algorithms Exam",
-      description: "Review sorting and searching algorithms",
-      priority: "High",
-      category: "Academic",
-      completed: false,
-      dueDate: "2024-01-22",
-      points: 75,
-      roast: "Procrastinating on algorithms? That's not very... efficient 🤓"
-    },
-    {
-      id: 3,
-      title: "Update Portfolio Website",
-      description: "Add recent projects and testimonials",
-      priority: "Medium",
-      category: "Personal",
-      completed: true,
-      dueDate: "2024-01-15",
-      points: 30,
-      roast: "Finally! Your portfolio was starting to look like 2019 called 📞"
-    },
-    {
-      id: 4,
-      title: "Call Mom",
-      description: "Weekly check-in call",
-      priority: "Low",
-      category: "Personal",
-      completed: true,
-      points: 10,
-      roast: "Basic human decency: achieved ✅"
-    }
-  ])
-
+  const [tasks, setTasks] = useState<Task[]>([])
+  const [userStats, setUserStats] = useState<UserStats>({
+    tasksCompleted: 0,
+    totalTasks: 0,
+    currentStreak: 0,
+    xpEarned: 0,
+    goalsProgress: 0
+  })
+  const [isLoading, setIsLoading] = useState(true)
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  
   const [newTask, setNewTask] = useState({
     title: '',
     description: '',
     priority: 'Medium' as Task['priority'],
     category: 'Personal' as Task['category'],
-    dueDate: ''
+    dueDate: '',
+    isDaily: false
   })
 
   const [filterPriority, setFilterPriority] = useState<string>('all')
   const [filterCategory, setFilterCategory] = useState<string>('all')
   const [showCompleted, setShowCompleted] = useState(false)
 
-  const addTask = () => {
+  // Load tasks and stats on component mount
+  useEffect(() => {
+    loadTasksAndStats()
+  }, [])
+
+  const loadTasksAndStats = async () => {
+    try {
+      setIsLoading(true)
+      const [tasksData, statsData] = await Promise.all([
+        taskApi.getTasks(),
+        taskApi.getUserStats()
+      ])
+      setTasks(tasksData)
+      setUserStats(statsData)
+    } catch (error) {
+      console.error('Error loading data:', error)
+      toast.error('Failed to load tasks. Please try again.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const addTask = async () => {
     if (!newTask.title.trim()) {
       toast.error("Task title is required!")
       return
     }
 
-    const task: Task = {
-      id: Date.now(),
-      title: newTask.title,
-      description: newTask.description,
-      priority: newTask.priority,
-      category: newTask.category,
-      completed: false,
-      dueDate: newTask.dueDate,
-      points: newTask.priority === 'High' ? 50 : newTask.priority === 'Medium' ? 30 : 15,
-      roast: generateRoast()
+    try {
+      const task = await taskApi.createTask(newTask)
+      setTasks([task, ...tasks])
+      setNewTask({ 
+        title: '', 
+        description: '', 
+        priority: 'Medium', 
+        category: 'Personal', 
+        dueDate: '',
+        isDaily: false
+      })
+      setIsDialogOpen(false)
+      
+      // Reload stats to get updated counts
+      const statsData = await taskApi.getUserStats()
+      setUserStats(statsData)
+      
+      toast.success("Task added! Now stop making excuses and do it 🔥")
+    } catch (error) {
+      console.error('Error adding task:', error)
+      toast.error('Failed to add task. Please try again.')
     }
-
-    setTasks([task, ...tasks])
-    setNewTask({ title: '', description: '', priority: 'Medium', category: 'Personal', dueDate: '' })
-    toast.success("Task added! Now stop making excuses and do it 🔥")
   }
 
-  const toggleTask = (id: number) => {
-    setTasks(tasks.map(task => {
-      if (task.id === id) {
-        const updated = { ...task, completed: !task.completed }
-        if (updated.completed) {
-          toast.success(`+${task.points} XP! You're on fire! 🎉`)
-        }
-        return updated
+  const toggleTask = async (taskId: string) => {
+    const task = tasks.find(t => t.id === taskId)
+    if (!task) return
+
+    try {
+      const updatedTask = await taskApi.updateTask(taskId, {
+        completed: !task.completed
+      })
+      
+      setTasks(tasks.map(t => t.id === taskId ? updatedTask : t))
+      
+      // Reload stats to get updated XP and completion counts
+      const statsData = await taskApi.getUserStats()
+      setUserStats(statsData)
+      
+      if (updatedTask.completed) {
+        const points = task.points || (task.priority === 'High' ? 50 : task.priority === 'Medium' ? 30 : 15)
+        toast.success(`+${points} XP! You're on fire! 🎉`)
       }
-      return task
-    }))
+    } catch (error) {
+      console.error('Error toggling task:', error)
+      toast.error('Failed to update task. Please try again.')
+    }
   }
 
-  const deleteTask = (id: number) => {
-    setTasks(tasks.filter(task => task.id !== id))
-    toast.success("Task deleted! Running away from your problems? 🏃‍♀️")
+  const deleteTask = async (taskId: string) => {
+    try {
+      await taskApi.deleteTask(taskId)
+      setTasks(tasks.filter(task => task.id !== taskId))
+      
+      // Reload stats to get updated counts
+      const statsData = await taskApi.getUserStats()
+      setUserStats(statsData)
+      
+      toast.success("Task deleted! Running away from your problems? 🏃‍♀️")
+    } catch (error) {
+      console.error('Error deleting task:', error)
+      toast.error('Failed to delete task. Please try again.')
+    }
   }
-
   const generateRoast = () => {
     const roasts = [
       "Another task? At this rate you'll finish by 2030 🐌",
@@ -175,7 +206,18 @@ const Tasks = () => {
     }
   }
 
-  const totalXP = tasks.filter(t => t.completed).reduce((sum, task) => sum + task.points, 0)
+  if (isLoading) {
+    return (
+      <DashboardLayout title="Tasks">
+        <div className="p-6 space-y-6">
+          <div className="flex items-center justify-center py-12">
+            <RefreshCw className="h-6 w-6 animate-spin mr-2" />
+            <span>Loading tasks...</span>
+          </div>
+        </div>
+      </DashboardLayout>
+    )
+  }
 
   return (
     <DashboardLayout title="Tasks">
@@ -194,7 +236,7 @@ const Tasks = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Total Tasks</p>
-                  <p className="text-2xl font-bold">{tasks.length}</p>
+                  <p className="text-2xl font-bold">{userStats.totalTasks}</p>
                 </div>
                 <CheckCircle className="h-8 w-8 text-primary" />
               </div>
@@ -206,7 +248,7 @@ const Tasks = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Completed</p>
-                  <p className="text-2xl font-bold">{tasks.filter(t => t.completed).length}</p>
+                  <p className="text-2xl font-bold">{userStats.tasksCompleted}</p>
                 </div>
                 <Star className="h-8 w-8 text-green-500" />
               </div>
@@ -218,7 +260,7 @@ const Tasks = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Total XP</p>
-                  <p className="text-2xl font-bold">{totalXP}</p>
+                  <p className="text-2xl font-bold">{userStats.xpEarned}</p>
                 </div>
                 <Flame className="h-8 w-8 text-orange-500" />
               </div>
@@ -228,7 +270,7 @@ const Tasks = () => {
 
         {/* Add Task & Filters */}
         <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
-          <Dialog>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button className="bg-gradient-primary text-white shadow-glow">
                 <Plus className="mr-2 h-4 w-4" />
@@ -285,6 +327,19 @@ const Tasks = () => {
                   value={newTask.dueDate}
                   onChange={(e) => setNewTask({...newTask, dueDate: e.target.value})}
                 />
+
+                {/* Daily Task Checkbox */}
+                <div className="flex items-center space-x-2">
+                  <Checkbox 
+                    id="isDaily"
+                    checked={newTask.isDaily}
+                    onCheckedChange={(checked) => setNewTask({...newTask, isDaily: !!checked})}
+                  />
+                  <label htmlFor="isDaily" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-2">
+                    <Calendar className="h-4 w-4" />
+                    Daily recurring task
+                  </label>
+                </div>
                 
                 <div className="flex gap-2">
                   <DemoRestrictedButton onClick={addTask} className="flex-1">
@@ -333,6 +388,16 @@ const Tasks = () => {
             >
               {showCompleted ? "Hide" : "Show"} Completed
             </DemoRestrictedButton>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={loadTasksAndStats}
+              className="ml-auto"
+            >
+              <RefreshCw className="h-4 w-4 mr-1" />
+              Refresh
+            </Button>
           </div>
         </div>
 
@@ -363,9 +428,17 @@ const Tasks = () => {
                     
                     <div className="flex-1">
                       <div className="flex items-start justify-between mb-2">
-                        <h3 className={`font-semibold ${task.completed ? 'line-through text-muted-foreground' : ''}`}>
-                          {task.title}
-                        </h3>
+                        <div className="flex items-center gap-2">
+                          <h3 className={`font-semibold ${task.completed ? 'line-through text-muted-foreground' : ''}`}>
+                            {task.title}
+                          </h3>
+                          {task.isDaily && (
+                            <Badge variant="outline" className="text-xs">
+                              <Calendar className="h-3 w-3 mr-1" />
+                              Daily
+                            </Badge>
+                          )}
+                        </div>
                         <div className="flex items-center gap-2">
                           <Badge variant={getPriorityColor(task.priority)}>
                             {task.priority}

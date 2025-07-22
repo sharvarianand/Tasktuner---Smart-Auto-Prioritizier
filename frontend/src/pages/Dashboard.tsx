@@ -3,8 +3,9 @@ import { motion } from "framer-motion"
 import { DashboardLayout } from "@/components/dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
+import { useNavigate } from "react-router-dom"
+import { toast } from "sonner"
 import { 
   CheckCircle, 
   Clock, 
@@ -19,56 +20,78 @@ import { FocusMode } from "@/components/focus-mode"
 import { DemoRestrictionBanner, DemoRestrictedButton } from "@/components/demo-restriction"
 import { useUser } from "@clerk/clerk-react"
 import { useDemo } from "@/contexts/DemoContext"
+import { useUserData } from "@/hooks/useUserData"
+import { useVoiceContext } from "@/contexts/VoiceContext"
 
 const Dashboard = () => {
   const { user } = useUser();
   const { isDemo } = useDemo();
+  const { userData, isLoadingUserData, isNewUser } = useUserData();
+  const { settings } = useVoiceContext();
+  const navigate = useNavigate();
   
   // Get user's first name or fallback to username/email
   const userName = user?.firstName || user?.username || user?.emailAddresses?.[0]?.emailAddress?.split('@')[0] || 'Procrastinator';
-  const isNewUser = user?.createdAt ? Date.now() - new Date(user.createdAt).getTime() < 24 * 60 * 60 * 1000 : false; // Less than 24 hours
+
+  // Function to speak roasts
+  const speakRoast = (text: string) => {
+    if ('speechSynthesis' in window && settings.enabled) {
+      // Cancel any existing speech
+      window.speechSynthesis.cancel();
+      
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = settings.rate || 1;
+      utterance.pitch = settings.pitch || 1.1; // Slightly higher pitch for sass
+      utterance.volume = settings.volume || 0.8;
+      
+      // Try to find a good voice for roasting
+      const voices = window.speechSynthesis.getVoices();
+      const preferredVoice = voices.find(voice => 
+        voice.lang.startsWith('en') && (
+          voice.name.toLowerCase().includes('female') ||
+          voice.name.toLowerCase().includes('samantha') ||
+          voice.name.toLowerCase().includes('karen')
+        )
+      ) || voices.find(voice => voice.lang.startsWith('en')) || voices[0];
+      
+      if (preferredVoice) {
+        utterance.voice = preferredVoice;
+      }
+      
+      window.speechSynthesis.speak(utterance);
+    }
+  };
+
+  // Dynamic stats based on user data
   const stats = [
     {
       title: "Tasks Completed",
-      value: "12",
-      change: "+3 from yesterday",
+      value: userData.stats.tasksCompleted.toString(),
+      change: isNewUser ? "Start your journey!" : `+${Math.floor(userData.stats.tasksCompleted * 0.2)} from yesterday`,
       icon: CheckCircle,
       color: "text-green-400"
     },
     {
       title: "Current Streak",
-      value: "7 days",
-      change: "Personal best!",
+      value: userData.stats.currentStreak > 0 ? `${userData.stats.currentStreak} days` : "Start today!",
+      change: isNewUser ? "Build momentum!" : userData.stats.currentStreak > 10 ? "On fire! 🔥" : "Keep going!",
       icon: Flame,
       color: "text-primary"
     },
     {
       title: "XP Earned",
-      value: "1,240",
-      change: "+180 this week",
+      value: userData.stats.xpEarned.toLocaleString(),
+      change: isNewUser ? "Earn your first XP!" : `+${Math.floor(userData.stats.xpEarned * 0.1)} this week`,
       icon: Zap,
       color: "text-secondary"
     },
     {
       title: "Goals Progress",
-      value: "65%",
-      change: "On track",
+      value: `${userData.stats.goalsProgress}%`,
+      change: isNewUser ? "Set your first goal!" : userData.stats.goalsProgress > 70 ? "Almost there!" : "Keep pushing!",
       icon: Target,
       color: "text-purple-400"
     }
-  ]
-
-  const recentTasks = [
-    { id: 1, title: "Finish React project", completed: true, priority: "High", roast: "Finally! Only took you 3 days 🙄" },
-    { id: 2, title: "Study for algorithms exam", completed: false, priority: "High", roast: "This isn't going to study itself, genius" },
-    { id: 3, title: "Update portfolio", completed: false, priority: "Medium", roast: "Your future self will thank you... eventually" },
-    { id: 4, title: "Call mom", completed: true, priority: "Low", roast: "Basic human decency achieved ✅" }
-  ]
-
-  const upcomingEvents = [
-    { time: "2:00 PM", title: "Team Meeting", type: "meeting" },
-    { time: "4:30 PM", title: "Gym Session", type: "personal" },
-    { time: "7:00 PM", title: "Study Block", type: "academic" }
   ]
 
   return (
@@ -134,41 +157,53 @@ const Dashboard = () => {
           ))}
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-6">
-          {/* Recent Tasks */}
+        <div className="grid lg:grid-cols-2 gap-6">
+          {/* Quick Actions */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className="lg:col-span-2"
           >
             <Card className="h-fit bg-card border-border">
               <CardHeader>
-                <CardTitle className="flex items-center justify-between text-card-foreground">
-                  Recent Tasks
-                  <DemoRestrictedButton variant="outline" size="sm" className="border-border text-muted-foreground hover:text-card-foreground">View All</DemoRestrictedButton>
+                <CardTitle className="flex items-center text-card-foreground">
+                  <Zap className="mr-2 h-4 w-4" />
+                  Quick Actions
                 </CardTitle>
-                <CardDescription className="text-muted-foreground">Your latest battles with productivity</CardDescription>
+                <CardDescription className="text-muted-foreground">Get started with your productivity journey</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                {recentTasks.map((task) => (
-                  <div key={task.id} className="flex items-center justify-between p-3 border border-border rounded-lg bg-muted/20">
-                    <div className="flex items-center space-x-3">
-                      <CheckCircle 
-                        className={`h-5 w-5 ${task.completed ? 'text-green-400' : 'text-muted-foreground'}`}
-                      />
-                      <div>
-                        <p className={`font-medium text-card-foreground ${task.completed ? 'line-through opacity-60' : ''}`}>
-                          {task.title}
-                        </p>
-                        <p className="text-xs text-muted-foreground italic">{task.roast}</p>
-                      </div>
-                    </div>
-                    <Badge variant={task.priority === 'High' ? 'destructive' : task.priority === 'Medium' ? 'default' : 'secondary'}>
-                      {task.priority}
-                    </Badge>
-                  </div>
-                ))}
+              <CardContent className="grid grid-cols-2 gap-4">
+                <DemoRestrictedButton 
+                  className="h-16 flex flex-col items-center justify-center space-y-1 bg-primary text-primary-foreground hover:bg-primary/90"
+                  onClick={() => navigate('/tasks')}
+                >
+                  <Plus className="h-5 w-5" />
+                  <span className="text-sm font-medium">Add Task</span>
+                </DemoRestrictedButton>
+                <DemoRestrictedButton 
+                  variant="outline" 
+                  className="h-16 flex flex-col items-center justify-center space-y-1 border-border text-muted-foreground hover:text-card-foreground"
+                  onClick={() => navigate('/goals')}
+                >
+                  <Target className="h-5 w-5" />
+                  <span className="text-sm font-medium">Set Goal</span>
+                </DemoRestrictedButton>
+                <DemoRestrictedButton 
+                  variant="outline" 
+                  className="h-16 flex flex-col items-center justify-center space-y-1 border-border text-muted-foreground hover:text-card-foreground"
+                  onClick={() => navigate('/calendar')}
+                >
+                  <Calendar className="h-5 w-5" />
+                  <span className="text-sm font-medium">Schedule</span>
+                </DemoRestrictedButton>
+                <DemoRestrictedButton 
+                  variant="outline" 
+                  className="h-16 flex flex-col items-center justify-center space-y-1 border-border text-muted-foreground hover:text-card-foreground"
+                  onClick={() => navigate('/analytics')}
+                >
+                  <TrendingUp className="h-5 w-5" />
+                  <span className="text-sm font-medium">Analytics</span>
+                </DemoRestrictedButton>
               </CardContent>
             </Card>
           </motion.div>
@@ -181,64 +216,8 @@ const Dashboard = () => {
             className="space-y-6"
           >
             {/* Focus Mode */}
-            <FocusMode />
-            {/* Today's Schedule */}
-            <Card className="bg-card border-border">
-              <CardHeader>
-                <CardTitle className="flex items-center text-card-foreground">
-                  <Calendar className="mr-2 h-4 w-4" />
-                  Today's Schedule
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {upcomingEvents.map((event, index) => (
-                  <div key={index} className="flex items-center space-x-3">
-                    <Badge variant="outline" className="text-xs border-border text-muted-foreground">
-                      {event.time}
-                    </Badge>
-                    <p className="text-sm text-card-foreground">{event.title}</p>
-                  </div>
-                ))}
-                <DemoRestrictedButton variant="outline" size="sm" className="w-full mt-3 border-border text-muted-foreground hover:text-card-foreground">
-                  <Plus className="mr-2 h-3 w-3" />
-                  Add Event
-                </DemoRestrictedButton>
-              </CardContent>
-            </Card>
-
-            {/* Goal Progress */}
-            <Card className="bg-card border-border">
-              <CardHeader>
-                <CardTitle className="flex items-center text-card-foreground">
-                  <Target className="mr-2 h-4 w-4" />
-                  Goal Progress
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span className="text-card-foreground">Learn React</span>
-                    <span className="text-muted-foreground">80%</span>
-                  </div>
-                  <Progress value={80} className="h-2" />
-                </div>
-                <div>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span className="text-card-foreground">Get Fit</span>
-                    <span className="text-muted-foreground">45%</span>
-                  </div>
-                  <Progress value={45} className="h-2" />
-                </div>
-                <div>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span className="text-card-foreground">Side Project</span>
-                    <span className="text-muted-foreground">20%</span>
-                  </div>
-                  <Progress value={20} className="h-2" />
-                </div>
-              </CardContent>
-            </Card>
-
+            <FocusMode onNavigateToFocus={() => navigate('/focus')} />
+            
             {/* Motivation Corner */}
             <Card className="bg-gradient-to-br from-primary/20 to-secondary/20 border-primary/30">
               <CardHeader>
@@ -248,12 +227,61 @@ const Dashboard = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm italic text-muted-foreground">
+                <p className="text-sm italic text-muted-foreground mb-3">
                   "Still scrolling through social media instead of your tasks? 
-                  Your future self is facepalming right now. 🤦‍♀️"
+                  Your future self is facepalming right now."
                 </p>
-                <DemoRestrictedButton size="sm" variant="outline" className="mt-3 w-full border-primary text-primary hover:bg-primary hover:text-white">
-                  Get Another Roast
+                
+                {/* Voice indicator and controls */}
+                <div className="flex items-center justify-between mb-3">
+                  {settings.enabled && (
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                      Voice enabled - roasts will be spoken aloud
+                    </div>
+                  )}
+                  {!settings.enabled && (
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => navigate('/roast')}
+                        className="text-xs p-1 h-auto"
+                      >
+                        Enable voice on /roast page
+                      </Button>
+                    </div>
+                  )}
+                </div>
+                <DemoRestrictedButton 
+                  size="sm" 
+                  variant="outline" 
+                  className="mt-3 w-full border-primary text-primary hover:bg-primary hover:text-white"
+                  onClick={() => {
+                    const roasts = [
+                      "Your procrastination level is legendary... unfortunately, that's not a good thing!",
+                      "I've seen turtles move faster than your task completion rate!",
+                      "Your to-do list called. It's filing a missing person report!",
+                      "Netflix: 47 hours this week. Productivity: Still loading...",
+                      "You're so good at avoiding work, you should get an award... but you'd probably procrastinate accepting it!",
+                      "Your future self just sent a message: 'Thanks for nothing!' Stop disappointing them!",
+                      "Procrastination is not a time management problem, it's an emotional regulation problem. Get therapy AND get to work!",
+                      "You've mastered the art of being busy without being productive. Congratulations on your useless superpower!",
+                      "Your productivity level is so low, it's causing a drought in the motivation department!",
+                      "If excuses were currency, you'd be a billionaire. Too bad they're worthless!"
+                    ];
+                    const randomRoast = roasts[Math.floor(Math.random() * roasts.length)];
+                    
+                    // Show toast notification
+                    toast.info(randomRoast, { duration: 5000 });
+                    
+                    // Speak the roast if voice is enabled
+                    if (settings.enabled) {
+                      speakRoast(randomRoast);
+                    }
+                  }}
+                >
+                  Get Another Roast {settings.enabled ? '🔊' : ''}
                 </DemoRestrictedButton>
               </CardContent>
             </Card>

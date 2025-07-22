@@ -7,10 +7,10 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Info, Lock } from 'lucide-react'
 import { useDemoMode } from '@/contexts/DemoContext'
 import { useNavigate } from 'react-router-dom'
+import AuthButton from '@/components/AuthButton'
 
 export const DemoRestrictionBanner: React.FC = () => {
   const { isDemoMode } = useDemoMode()
-  const navigate = useNavigate()
 
   if (!isDemoMode) return null
 
@@ -29,12 +29,10 @@ export const DemoRestrictionBanner: React.FC = () => {
               </p>
             </div>
           </div>
-          <Button 
-            onClick={() => navigate('/')} 
+          <AuthButton 
+            buttonText="Sign Up Now"
             className="bg-primary text-primary-foreground hover:bg-primary/90"
-          >
-            Sign Up Now
-          </Button>
+          />
         </div>
       </CardContent>
     </Card>
@@ -48,6 +46,7 @@ interface DemoRestrictedButtonProps {
   variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link"
   size?: "default" | "sm" | "lg" | "icon"
   disabled?: boolean
+  allowInDemo?: boolean // New prop to allow certain actions in demo mode
 }
 
 export const DemoRestrictedButton: React.FC<DemoRestrictedButtonProps> = ({
@@ -57,17 +56,20 @@ export const DemoRestrictedButton: React.FC<DemoRestrictedButtonProps> = ({
   variant = "default",
   size = "default",
   disabled = false,
+  allowInDemo = false,
   ...props
 }) => {
   const { isDemoMode, showDemoRestriction } = useDemoMode()
 
   const handleClick = () => {
-    if (isDemoMode) {
+    if (isDemoMode && !allowInDemo) {
       showDemoRestriction()
       return
     }
     onClick?.()
   }
+
+  const isDisabled = disabled || (isDemoMode && !allowInDemo)
 
   return (
     <Button
@@ -75,10 +77,10 @@ export const DemoRestrictedButton: React.FC<DemoRestrictedButtonProps> = ({
       className={className}
       variant={variant}
       size={size}
-      disabled={disabled || isDemoMode}
+      disabled={isDisabled}
       {...props}
     >
-      {isDemoMode && <Lock className="h-4 w-4 mr-2" />}
+      {isDemoMode && !allowInDemo && <Lock className="h-4 w-4 mr-2" />}
       {children}
     </Button>
   )

@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { DemoProvider } from "@/contexts/DemoContext";
+import { VoiceProvider } from "@/contexts/VoiceContext";
 import { ClerkProvider } from "@clerk/clerk-react";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
@@ -21,6 +22,7 @@ import Leaderboard from "./pages/Leaderboard";
 import Settings from "./pages/Settings";
 import Notifications from "./pages/Notifications";
 import NotFound from "./pages/NotFound";
+import Roast from "./pages/Roast";
 
 const queryClient = new QueryClient();
 
@@ -35,13 +37,15 @@ const App = () => (
   <ClerkProvider publishableKey={clerkPubKey}>
     <QueryClientProvider client={queryClient}>
       <ThemeProvider defaultTheme="light" storageKey="tasktuner-theme">
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <DemoProvider>
-              <Routes>
-              <Route path="/" element={<Index />} />
+        <VoiceProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <DemoProvider>
+                <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/roast" element={<Roast />} />
               <Route path="/onboarding" element={
                 <ProtectedRoute>
                   <Onboarding />
@@ -115,6 +119,7 @@ const App = () => (
             </DemoProvider>
           </BrowserRouter>
         </TooltipProvider>
+        </VoiceProvider>
       </ThemeProvider>
     </QueryClientProvider>
   </ClerkProvider>

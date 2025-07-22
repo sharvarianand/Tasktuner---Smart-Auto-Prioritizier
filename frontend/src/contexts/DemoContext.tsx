@@ -48,9 +48,9 @@ export const DemoProvider: React.FC<DemoProviderProps> = ({ children }) => {
 
   const showDemoRestriction = () => {
     toast({
-      title: "Demo Mode Restriction",
-      description: "Sign up to unlock all features and make changes to your dashboard!",
-      duration: 3000,
+      title: "🔒 Demo Mode Active",
+      description: "You're in demo mode. Sign up to unlock all features and save your progress!",
+      duration: 5000,
     })
   }
 

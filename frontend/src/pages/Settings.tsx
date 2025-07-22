@@ -1,5 +1,5 @@
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { DashboardLayout } from "@/components/dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -11,6 +11,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { DemoRestrictionBanner, DemoRestrictedButton } from "@/components/demo-restriction"
+import { useUser } from "@clerk/clerk-react"
+import { useDemoMode } from "@/contexts/DemoContext"
 import { 
   Select,
   SelectContent,
@@ -48,6 +50,8 @@ import { toast } from "sonner"
 
 const Settings = () => {
   const { theme, setTheme } = useTheme()
+  const { user } = useUser()
+  const { isDemoMode } = useDemoMode()
   
   const [settings, setSettings] = useState({
     notifications: {
@@ -81,11 +85,40 @@ const Settings = () => {
   })
 
   const [profile, setProfile] = useState({
-    name: "Aarav Sharma",
-    email: "aarav@example.com",
+    name: user?.firstName && user?.lastName 
+      ? `${user.firstName} ${user.lastName}` 
+      : user?.username || user?.emailAddresses[0]?.emailAddress?.split('@')[0] || "User",
+    email: user?.emailAddresses[0]?.emailAddress || "user@example.com",
     bio: "Aspiring developer trying to get my life together, one task at a time.",
     timezone: "Asia/Kolkata"
   })
+
+  // Get user initials for avatar fallback
+  const getUserInitials = () => {
+    if (user?.firstName && user?.lastName) {
+      return `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`.toUpperCase()
+    }
+    if (user?.username) {
+      return user.username.substring(0, 2).toUpperCase()
+    }
+    if (user?.emailAddresses[0]?.emailAddress) {
+      return user.emailAddresses[0].emailAddress.substring(0, 2).toUpperCase()
+    }
+    return "US"
+  }
+
+  // Update profile when user data changes
+  useEffect(() => {
+    if (user) {
+      setProfile(prev => ({
+        ...prev,
+        name: user?.firstName && user?.lastName 
+          ? `${user.firstName} ${user.lastName}` 
+          : user?.username || user?.emailAddresses[0]?.emailAddress?.split('@')[0] || "User",
+        email: user?.emailAddresses[0]?.emailAddress || "user@example.com"
+      }))
+    }
+  }, [user])
 
   const updateSetting = (category: string, key: string, value: any) => {
     setSettings(prev => ({
@@ -108,6 +141,7 @@ const Settings = () => {
 
   return (
     <DashboardLayout title="Settings">
+      <DemoRestrictionBanner />
       <div className="p-6 space-y-6">
         {/* Header */}
         <motion.div
@@ -142,8 +176,8 @@ const Settings = () => {
                 <div className="flex items-center gap-4">
                   <div className="relative">
                     <Avatar className="h-16 w-16">
-                      <AvatarImage src="/api/placeholder/64/64" />
-                      <AvatarFallback>JD</AvatarFallback>
+                      <AvatarImage src={user?.imageUrl} />
+                      <AvatarFallback>{getUserInitials()}</AvatarFallback>
                     </Avatar>
                     <Button size="icon" variant="outline" className="absolute -bottom-1 -right-1 h-6 w-6">
                       <Camera className="h-3 w-3" />
@@ -163,6 +197,7 @@ const Settings = () => {
                       id="name"
                       value={profile.name}
                       onChange={(e) => setProfile({...profile, name: e.target.value})}
+                      disabled={isDemoMode}
                     />
                   </div>
                   
@@ -173,12 +208,17 @@ const Settings = () => {
                       value={profile.bio}
                       onChange={(e) => setProfile({...profile, bio: e.target.value})}
                       rows={3}
+                      disabled={isDemoMode}
                     />
                   </div>
                   
                   <div>
                     <Label htmlFor="timezone">Timezone</Label>
-                    <Select value={profile.timezone} onValueChange={(value) => setProfile({...profile, timezone: value})}>
+                    <Select 
+                      value={profile.timezone} 
+                      onValueChange={(value) => setProfile({...profile, timezone: value})}
+                      disabled={isDemoMode}
+                    >
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
@@ -192,10 +232,14 @@ const Settings = () => {
                   </div>
                 </div>
 
-                <Button variant="outline" className="w-full">
+                <DemoRestrictedButton 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={() => toast.info("Profile editing coming soon!")}
+                >
                   <Edit className="mr-2 h-4 w-4" />
                   Edit Profile
-                </Button>
+                </DemoRestrictedButton>
               </CardContent>
             </Card>
           </motion.div>

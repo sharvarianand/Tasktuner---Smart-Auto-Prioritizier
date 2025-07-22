@@ -18,6 +18,8 @@ import {
   Zap,
   Target
 } from "lucide-react"
+import { useUserData } from "@/hooks/useUserData"
+import { DemoRestrictionBanner } from "@/components/demo-restriction"
 
 interface LeaderboardUser {
   id: number
@@ -32,96 +34,10 @@ interface LeaderboardUser {
 }
 
 const Leaderboard = () => {
-  const globalLeaderboard: LeaderboardUser[] = [
-    {
-      id: 1,
-      name: "Aditya Patel",
-      avatar: "/api/placeholder/40/40",
-      xp: 4250,
-      streak: 28,
-      tasksCompleted: 185,
-      rank: 1,
-      change: 'same',
-      badge: "Productivity King 👑"
-    },
-    {
-      id: 2,
-      name: "Kavya Gupta",
-      avatar: "/api/placeholder/40/40",
-      xp: 3890,
-      streak: 21,
-      tasksCompleted: 167,
-      rank: 2,
-      change: 'up',
-      badge: "Streak Master 🔥"
-    },
-    {
-      id: 3,
-      name: "Ravi Kumar",
-      avatar: "/api/placeholder/40/40",
-      xp: 3650,
-      streak: 15,
-      tasksCompleted: 145,
-      rank: 3,
-      change: 'down',
-      badge: "Task Crusher 💪"
-    },
-    {
-      id: 4,
-      name: "Ananya Singh",
-      avatar: "/api/placeholder/40/40",
-      xp: 3420,
-      streak: 19,
-      tasksCompleted: 134,
-      rank: 4,
-      change: 'up',
-      badge: "Goal Getter 🎯"
-    },
-    {
-      id: 5,
-      name: "You",
-      avatar: "/api/placeholder/40/40",
-      xp: 2340,
-      streak: 8,
-      tasksCompleted: 89,
-      rank: 12,
-      change: 'up',
-      badge: "Rising Star ⭐"
-    }
-  ]
+  const { leaderboard } = useUserData()
 
-  const friendsLeaderboard: LeaderboardUser[] = [
-    {
-      id: 1,
-      name: "Ishita Mehta",
-      avatar: "/api/placeholder/40/40",
-      xp: 2850,
-      streak: 12,
-      tasksCompleted: 95,
-      rank: 1,
-      change: 'same'
-    },
-    {
-      id: 2,
-      name: "You",
-      avatar: "/api/placeholder/40/40",
-      xp: 2340,
-      streak: 8,
-      tasksCompleted: 89,
-      rank: 2,
-      change: 'up'
-    },
-    {
-      id: 3,
-      name: "Vikash Reddy",
-      avatar: "/api/placeholder/40/40",
-      xp: 1950,
-      streak: 5,
-      tasksCompleted: 67,
-      rank: 3,
-      change: 'down'
-    }
-  ]
+  const globalLeaderboard: LeaderboardUser[] = leaderboard
+  const friendsLeaderboard: LeaderboardUser[] = leaderboard.slice(0, 3) // Show top 3 for friends
 
   const achievements = [
     {
@@ -183,6 +99,7 @@ const Leaderboard = () => {
 
   return (
     <DashboardLayout title="Leaderboard">
+      <DemoRestrictionBanner />
       <div className="p-6 space-y-6">
         {/* Header */}
         <motion.div

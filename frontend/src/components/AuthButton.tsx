@@ -35,9 +35,6 @@ const AuthButton = ({
   if (isSignedIn && user) {
     return (
       <div className="flex items-center space-x-2">
-        <span className="text-sm text-muted-foreground hidden sm:inline">
-          Welcome, {user.firstName || user.username || 'User'}!
-        </span>
         <UserButton 
           afterSignOutUrl="/"
           appearance={{

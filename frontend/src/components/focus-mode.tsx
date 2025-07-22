@@ -44,7 +44,11 @@ interface FocusSession {
   endTime?: Date
 }
 
-export function FocusMode() {
+interface FocusModeProps {
+  onNavigateToFocus?: () => void
+}
+
+export function FocusMode({ onNavigateToFocus }: FocusModeProps) {
   const [isActive, setIsActive] = useState(false)
   const [isPaused, setIsPaused] = useState(false)
   const [time, setTime] = useState(0) // in seconds
@@ -162,6 +166,12 @@ export function FocusMode() {
   }
 
   const startTimer = () => {
+    // If lock is enabled, redirect to full focus page instead
+    if (lockApp && onNavigateToFocus) {
+      onNavigateToFocus()
+      return
+    }
+    
     setIsActive(true)
     setIsPaused(false)
     
@@ -364,7 +374,7 @@ export function FocusMode() {
           {!isActive ? (
             <Button onClick={startTimer} className="bg-primary text-primary-foreground hover:bg-primary/90">
               <Play className="h-4 w-4 mr-2" />
-              Start Focus
+              {lockApp ? "Start in Full Mode" : "Start Focus"}
             </Button>
           ) : (
             <>
@@ -377,6 +387,21 @@ export function FocusMode() {
             </>
           )}
         </div>
+
+        {/* Full Focus Mode Link */}
+        {onNavigateToFocus && (
+          <div className="text-center">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={onNavigateToFocus}
+              className="text-muted-foreground hover:text-card-foreground"
+            >
+              <Target className="h-3 w-3 mr-1" />
+              {isActive && lockApp ? "Unlock in Full Mode" : "Full Focus Mode"}
+            </Button>
+          </div>
+        )}
 
         {/* Session Stats */}
         {sessions.length > 0 && (

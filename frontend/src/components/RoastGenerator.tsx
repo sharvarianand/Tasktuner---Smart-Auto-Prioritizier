@@ -3,8 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
-import { Flame, Zap, Target, Clock, RefreshCw } from "lucide-react";
+import { Flame, Zap, Target, Clock, RefreshCw, Volume2, VolumeX } from "lucide-react";
 import AuthButton from "@/components/AuthButton";
+import { useVoiceContext } from "@/contexts/VoiceContext";
 
 const roasts = [
   {
@@ -48,15 +49,133 @@ const roasts = [
 const RoastGenerator = () => {
   const [currentRoast, setCurrentRoast] = useState(roasts[0]);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const { settings, toggleVoice, availableVoices } = useVoiceContext();
+
+  // Speech synthesis functions
+  const speakRoast = (text: string) => {
+    console.log('speakRoast called:', { text, enabled: settings.enabled, hasVoices: availableVoices.length });
+    
+    if ('speechSynthesis' in window && settings.enabled) {
+      // Check if speech synthesis is available and not speaking
+      if (window.speechSynthesis.speaking) {
+        console.log('Already speaking, cancelling...');
+        window.speechSynthesis.cancel();
+      }
+      
+      // Small delay to ensure cancellation completes
+      setTimeout(() => {
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.rate = settings.rate || 1;
+        utterance.pitch = settings.pitch || 1;
+        utterance.volume = settings.volume || 0.8;
+        
+        // Use selected voice from settings or find a good default
+        let selectedVoice = null;
+        const voices = window.speechSynthesis.getVoices();
+        
+        if (settings.voice && voices.length > 0) {
+          selectedVoice = voices.find(voice => voice.name === settings.voice);
+        }
+        
+        // If no voice selected or found, try to find a good default
+        if (!selectedVoice && voices.length > 0) {
+          selectedVoice = voices.find(voice => 
+            voice.lang.startsWith('en') && (
+              voice.name.toLowerCase().includes('female') ||
+              voice.name.toLowerCase().includes('samantha') ||
+              voice.name.toLowerCase().includes('karen')
+            )
+          ) || voices.find(voice => voice.lang.startsWith('en')) || voices[0];
+        }
+        
+        if (selectedVoice) {
+          utterance.voice = selectedVoice;
+          console.log('Using voice:', selectedVoice.name);
+        } else {
+          console.log('No voice selected, using default');
+        }
+
+        utterance.onstart = () => {
+          console.log('Speech started');
+          setIsSpeaking(true);
+        };
+        utterance.onend = () => {
+          console.log('Speech ended');
+          setIsSpeaking(false);
+        };
+        utterance.onerror = (event) => {
+          console.error('Speech error:', event.error);
+          setIsSpeaking(false);
+        };
+
+        console.log('Starting speech synthesis...');
+        try {
+          window.speechSynthesis.speak(utterance);
+        } catch (error) {
+          console.error('Failed to start speech:', error);
+          setIsSpeaking(false);
+        }
+      }, 100);
+    } else {
+      console.log('Speech not available or not enabled', {
+        speechSynthesis: 'speechSynthesis' in window,
+        enabled: settings.enabled
+      });
+    }
+  };
+
+  const stopSpeaking = () => {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+    }
+  };
 
   const generateNewRoast = () => {
     setIsAnimating(true);
+    stopSpeaking(); // Stop any current speech
+    
     setTimeout(() => {
       const randomRoast = roasts[Math.floor(Math.random() * roasts.length)];
       setCurrentRoast(randomRoast);
       setIsAnimating(false);
+      
+      // Speak the new roast if voice is enabled
+      if (settings.enabled) {
+        setTimeout(() => speakRoast(randomRoast.message), 100);
+      }
     }, 300);
   };
+
+  // Load voices when component mounts
+  useEffect(() => {
+    if ('speechSynthesis' in window) {
+      const loadVoices = () => {
+        const voices = window.speechSynthesis.getVoices();
+        console.log('Voices loaded:', voices.length);
+      };
+      
+      loadVoices();
+      if (speechSynthesis.onvoiceschanged !== undefined) {
+        speechSynthesis.onvoiceschanged = loadVoices;
+      }
+      
+      // Force load voices with a small delay
+      setTimeout(loadVoices, 100);
+    }
+  }, []);
+
+  // Auto-speak when voice is enabled and roast changes (only for manual roast generation)
+  useEffect(() => {
+    if (settings.enabled && !isAnimating && currentRoast.id !== roasts[0].id) {
+      // Only auto-speak if it's not the initial roast
+      console.log('Auto-speaking roast:', currentRoast.message);
+      setTimeout(() => {
+        speakRoast(currentRoast.message);
+      }, 300);
+    }
+  }, [currentRoast, settings.enabled, isAnimating]);
 
   useEffect(() => {
     const interval = setInterval(generateNewRoast, 5000);
@@ -121,6 +240,34 @@ const RoastGenerator = () => {
               >
                 <RefreshCw className={`w-4 h-4 ${isAnimating ? 'animate-spin' : ''}`} />
                 Get Another Roast
+              </Button>
+
+              <Button
+                variant="outline"
+                onClick={() => speakRoast(currentRoast.message)}
+                disabled={!settings.enabled || isSpeaking}
+                className="flex items-center gap-2"
+              >
+                {isSpeaking ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                {isSpeaking ? 'Speaking...' : 'Speak This Roast'}
+              </Button>
+
+              <Button
+                variant="outline"
+                onClick={toggleVoice}
+                className={`flex items-center gap-2 ${settings.enabled ? 'bg-primary/10 text-primary border-primary' : ''}`}
+              >
+                {settings.enabled ? (
+                  <>
+                    <Volume2 className="w-4 h-4" />
+                    Voice On
+                  </>
+                ) : (
+                  <>
+                    <VolumeX className="w-4 h-4" />
+                    Voice Off
+                  </>
+                )}
               </Button>
               
               <AuthButton 
