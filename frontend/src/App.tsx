@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SidebarProvider } from "@/components/ui/sidebar";
+import { DemoProvider } from "@/contexts/DemoContext";
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
 import Tasks from "./pages/Tasks";
@@ -27,7 +28,8 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <Routes>
+          <DemoProvider>
+            <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/dashboard" element={
               <SidebarProvider>
@@ -76,6 +78,7 @@ const App = () => (
             } />
             <Route path="*" element={<NotFound />} />
           </Routes>
+          </DemoProvider>
         </BrowserRouter>
       </TooltipProvider>
     </ThemeProvider>

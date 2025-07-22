@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
+import { DemoRestrictionBanner, DemoRestrictedButton } from "@/components/demo-restriction"
 import { 
   Dialog,
   DialogContent,
@@ -168,6 +169,9 @@ const Goals = () => {
   return (
     <DashboardLayout title="Goals">
       <div className="p-6 space-y-6">
+        {/* Demo Restriction Banner */}
+        <DemoRestrictionBanner />
+        
         {/* Header Stats */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}

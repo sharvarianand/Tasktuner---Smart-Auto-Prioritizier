@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
+import { DemoRestrictionBanner, DemoRestrictedButton } from "@/components/demo-restriction"
 import { 
   Select,
   SelectContent,
@@ -179,6 +180,9 @@ const Tasks = () => {
   return (
     <DashboardLayout title="Tasks">
       <div className="p-6 space-y-6">
+        {/* Demo Restriction Banner */}
+        <DemoRestrictionBanner />
+        
         {/* Header Stats */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -283,12 +287,12 @@ const Tasks = () => {
                 />
                 
                 <div className="flex gap-2">
-                  <Button onClick={addTask} className="flex-1">
+                  <DemoRestrictedButton onClick={addTask} className="flex-1">
                     Add Task
-                  </Button>
-                  <Button variant="outline" size="icon">
+                  </DemoRestrictedButton>
+                  <DemoRestrictedButton variant="outline" size="icon">
                     <Mic className="h-4 w-4" />
-                  </Button>
+                  </DemoRestrictedButton>
                 </div>
               </div>
             </DialogContent>
@@ -322,13 +326,13 @@ const Tasks = () => {
               </SelectContent>
             </Select>
             
-            <Button
+            <DemoRestrictedButton
               variant={showCompleted ? "default" : "outline"}
               size="sm"
               onClick={() => setShowCompleted(!showCompleted)}
             >
               {showCompleted ? "Hide" : "Show"} Completed
-            </Button>
+            </DemoRestrictedButton>
           </div>
         </div>
 
@@ -344,7 +348,7 @@ const Tasks = () => {
               <Card className={`transition-all duration-200 hover:shadow-md ${task.completed ? 'opacity-60' : ''}`}>
                 <CardContent className="pt-6">
                   <div className="flex items-start gap-4">
-                    <Button
+                    <DemoRestrictedButton
                       variant="ghost"
                       size="icon"
                       onClick={() => toggleTask(task.id)}
@@ -355,7 +359,7 @@ const Tasks = () => {
                       ) : (
                         <Circle className="h-5 w-5 text-muted-foreground" />
                       )}
-                    </Button>
+                    </DemoRestrictedButton>
                     
                     <div className="flex-1">
                       <div className="flex items-start justify-between mb-2">
@@ -395,14 +399,14 @@ const Tasks = () => {
                           </div>
                         )}
                         
-                        <Button
+                        <DemoRestrictedButton
                           variant="ghost"
                           size="icon"
                           onClick={() => deleteTask(task.id)}
                           className="text-destructive hover:text-destructive"
                         >
                           <Trash2 className="h-4 w-4" />
-                        </Button>
+                        </DemoRestrictedButton>
                       </div>
                     </div>
                   </div>

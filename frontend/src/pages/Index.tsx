@@ -101,7 +101,7 @@ const Index = () => {
               Testimonials
             </Button>
             <ThemeToggle />
-            <Button variant="ghost" onClick={() => navigate('/dashboard')} className="text-foreground hover:text-primary">
+            <Button variant="ghost" onClick={() => navigate('/dashboard?demo=true')} className="text-foreground hover:text-primary">
               Try Demo
             </Button>
             <Button onClick={() => navigate('/dashboard')} className="bg-primary text-primary-foreground hover:bg-primary/90">
@@ -131,7 +131,7 @@ const Index = () => {
             
             <h1 className="text-5xl md:text-7xl font-bold mb-6 text-foreground">
               Welcome to{" "}
-              <span className="text-primary">TaskTuner</span>
+              <span className="text-primary">TaskTuner!</span>
             </h1>
             
             <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-3xl mx-auto">

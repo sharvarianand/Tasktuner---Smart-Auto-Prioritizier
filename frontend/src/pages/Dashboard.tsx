@@ -16,6 +16,7 @@ import {
   Zap
 } from "lucide-react"
 import { FocusMode } from "@/components/focus-mode"
+import { DemoRestrictionBanner, DemoRestrictedButton } from "@/components/demo-restriction"
 
 const Dashboard = () => {
   const stats = [
@@ -65,6 +66,9 @@ const Dashboard = () => {
   return (
     <DashboardLayout title="Dashboard">
       <div className="p-6 space-y-6">
+        {/* Demo Restriction Banner */}
+        <DemoRestrictionBanner />
+        
         {/* Welcome Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -116,7 +120,7 @@ const Dashboard = () => {
               <CardHeader>
                 <CardTitle className="flex items-center justify-between text-card-foreground">
                   Recent Tasks
-                  <Button variant="outline" size="sm" className="border-border text-muted-foreground hover:text-card-foreground">View All</Button>
+                  <DemoRestrictedButton variant="outline" size="sm" className="border-border text-muted-foreground hover:text-card-foreground">View All</DemoRestrictedButton>
                 </CardTitle>
                 <CardDescription className="text-muted-foreground">Your latest battles with productivity</CardDescription>
               </CardHeader>
@@ -169,10 +173,10 @@ const Dashboard = () => {
                     <p className="text-sm text-card-foreground">{event.title}</p>
                   </div>
                 ))}
-                <Button variant="outline" size="sm" className="w-full mt-3 border-border text-muted-foreground hover:text-card-foreground">
+                <DemoRestrictedButton variant="outline" size="sm" className="w-full mt-3 border-border text-muted-foreground hover:text-card-foreground">
                   <Plus className="mr-2 h-3 w-3" />
                   Add Event
-                </Button>
+                </DemoRestrictedButton>
               </CardContent>
             </Card>
 
@@ -222,9 +226,9 @@ const Dashboard = () => {
                   "Still scrolling through social media instead of your tasks? 
                   Your future self is facepalming right now. 🤦‍♀️"
                 </p>
-                <Button size="sm" variant="outline" className="mt-3 w-full border-primary text-primary hover:bg-primary hover:text-white">
+                <DemoRestrictedButton size="sm" variant="outline" className="mt-3 w-full border-primary text-primary hover:bg-primary hover:text-white">
                   Get Another Roast
-                </Button>
+                </DemoRestrictedButton>
               </CardContent>
             </Card>
           </motion.div>
