@@ -17,8 +17,16 @@ import {
 } from "lucide-react"
 import { FocusMode } from "@/components/focus-mode"
 import { DemoRestrictionBanner, DemoRestrictedButton } from "@/components/demo-restriction"
+import { useUser } from "@clerk/clerk-react"
+import { useDemo } from "@/contexts/DemoContext"
 
 const Dashboard = () => {
+  const { user } = useUser();
+  const { isDemo } = useDemo();
+  
+  // Get user's first name or fallback to username/email
+  const userName = user?.firstName || user?.username || user?.emailAddresses?.[0]?.emailAddress?.split('@')[0] || 'Procrastinator';
+  const isNewUser = user?.createdAt ? Date.now() - new Date(user.createdAt).getTime() < 24 * 60 * 60 * 1000 : false; // Less than 24 hours
   const stats = [
     {
       title: "Tasks Completed",
@@ -78,10 +86,28 @@ const Dashboard = () => {
         >
           <div className="absolute inset-0 bg-black/10" />
           <div className="relative z-10">
-            <h1 className="text-2xl font-bold mb-2">Welcome back, Procrastinator! 👋</h1>
-            <p className="text-white/90 mb-4">
-              Ready to turn your "I'll do it tomorrow" into "I did it today"?
-            </p>
+            {isDemo ? (
+              <>
+                <h1 className="text-2xl font-bold mb-2">Welcome to the Demo! 👋</h1>
+                <p className="text-white/90 mb-4">
+                  You're in demo mode. Ready to see what TaskTuner can do for real procrastinators?
+                </p>
+              </>
+            ) : isNewUser ? (
+              <>
+                <h1 className="text-2xl font-bold mb-2">Welcome to TaskTuner, {userName}! 🎉</h1>
+                <p className="text-white/90 mb-4">
+                  You've taken the first step! Now let's turn your procrastination into productivity.
+                </p>
+              </>
+            ) : (
+              <>
+                <h1 className="text-2xl font-bold mb-2">Welcome back, {userName}! 👋</h1>
+                <p className="text-white/90 mb-4">
+                  Ready to turn your "I'll do it tomorrow" into "I did it today"?
+                </p>
+              </>
+            )}
           </div>
         </motion.div>
 

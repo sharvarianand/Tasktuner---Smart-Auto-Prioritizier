@@ -4,6 +4,7 @@ import { toast } from '@/hooks/use-toast'
 
 interface DemoContextType {
   isDemoMode: boolean
+  isDemo: boolean // Add alias for backwards compatibility
   setDemoMode: (isDemo: boolean) => void
   showDemoRestriction: () => void
 }
@@ -14,6 +15,15 @@ export const useDemoMode = () => {
   const context = useContext(DemoContext)
   if (!context) {
     throw new Error('useDemoMode must be used within a DemoProvider')
+  }
+  return context
+}
+
+// Add useDemo as an alias for backwards compatibility
+export const useDemo = () => {
+  const context = useContext(DemoContext)
+  if (!context) {
+    throw new Error('useDemo must be used within a DemoProvider')
   }
   return context
 }
@@ -45,7 +55,12 @@ export const DemoProvider: React.FC<DemoProviderProps> = ({ children }) => {
   }
 
   return (
-    <DemoContext.Provider value={{ isDemoMode, setDemoMode, showDemoRestriction }}>
+    <DemoContext.Provider value={{ 
+      isDemoMode, 
+      isDemo: isDemoMode, // Add alias for backwards compatibility
+      setDemoMode, 
+      showDemoRestriction 
+    }}>
       {children}
     </DemoContext.Provider>
   )

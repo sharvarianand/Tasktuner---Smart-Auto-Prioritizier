@@ -7,7 +7,10 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { DemoProvider } from "@/contexts/DemoContext";
+import { ClerkProvider } from "@clerk/clerk-react";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
+import Onboarding from "./pages/Onboarding";
 import Dashboard from "./pages/Dashboard";
 import Tasks from "./pages/Tasks";
 import Focus from "./pages/Focus";
@@ -21,68 +24,100 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
+// Get Clerk publishable key from environment variables
+const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+
+if (!clerkPubKey) {
+  throw new Error("Missing Clerk publishable key. Please add VITE_CLERK_PUBLISHABLE_KEY to your .env file.");
+}
+
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <ThemeProvider defaultTheme="light" storageKey="tasktuner-theme">
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <DemoProvider>
-            <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/dashboard" element={
-              <SidebarProvider>
-                <Dashboard />
-              </SidebarProvider>
-            } />
-            <Route path="/tasks" element={
-              <SidebarProvider>
-                <Tasks />
-              </SidebarProvider>
-            } />
-            <Route path="/focus" element={
-              <SidebarProvider>
-                <Focus />
-              </SidebarProvider>
-            } />
-            <Route path="/calendar" element={
-              <SidebarProvider>
-                <Calendar />
-              </SidebarProvider>
-            } />
-            <Route path="/goals" element={
-              <SidebarProvider>
-                <Goals />
-              </SidebarProvider>
-            } />
-            <Route path="/analytics" element={
-              <SidebarProvider>
-                <Analytics />
-              </SidebarProvider>
-            } />
-            <Route path="/leaderboard" element={
-              <SidebarProvider>
-                <Leaderboard />
-              </SidebarProvider>
-            } />
-            <Route path="/settings" element={
-              <SidebarProvider>
-                <Settings />
-              </SidebarProvider>
-            } />
-            <Route path="/notifications" element={
-              <SidebarProvider>
-                <Notifications />
-              </SidebarProvider>
-            } />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-          </DemoProvider>
-        </BrowserRouter>
-      </TooltipProvider>
-    </ThemeProvider>
-  </QueryClientProvider>
+  <ClerkProvider publishableKey={clerkPubKey}>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider defaultTheme="light" storageKey="tasktuner-theme">
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <DemoProvider>
+              <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/onboarding" element={
+                <ProtectedRoute>
+                  <Onboarding />
+                </ProtectedRoute>
+              } />
+              <Route path="/dashboard" element={
+                <ProtectedRoute>
+                  <SidebarProvider>
+                    <Dashboard />
+                  </SidebarProvider>
+                </ProtectedRoute>
+              } />
+              <Route path="/tasks" element={
+                <ProtectedRoute>
+                  <SidebarProvider>
+                    <Tasks />
+                  </SidebarProvider>
+                </ProtectedRoute>
+              } />
+              <Route path="/focus" element={
+                <ProtectedRoute>
+                  <SidebarProvider>
+                    <Focus />
+                  </SidebarProvider>
+                </ProtectedRoute>
+              } />
+              <Route path="/calendar" element={
+                <ProtectedRoute>
+                  <SidebarProvider>
+                    <Calendar />
+                  </SidebarProvider>
+                </ProtectedRoute>
+              } />
+              <Route path="/goals" element={
+                <ProtectedRoute>
+                  <SidebarProvider>
+                    <Goals />
+                  </SidebarProvider>
+                </ProtectedRoute>
+              } />
+              <Route path="/analytics" element={
+                <ProtectedRoute>
+                  <SidebarProvider>
+                    <Analytics />
+                  </SidebarProvider>
+                </ProtectedRoute>
+              } />
+              <Route path="/leaderboard" element={
+                <ProtectedRoute>
+                  <SidebarProvider>
+                    <Leaderboard />
+                  </SidebarProvider>
+                </ProtectedRoute>
+              } />
+              <Route path="/settings" element={
+                <ProtectedRoute>
+                  <SidebarProvider>
+                    <Settings />
+                  </SidebarProvider>
+                </ProtectedRoute>
+              } />
+              <Route path="/notifications" element={
+                <ProtectedRoute>
+                  <SidebarProvider>
+                    <Notifications />
+                  </SidebarProvider>
+                </ProtectedRoute>
+              } />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+            </DemoProvider>
+          </BrowserRouter>
+        </TooltipProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
+  </ClerkProvider>
 );
 
 export default App;

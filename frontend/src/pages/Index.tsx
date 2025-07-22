@@ -21,6 +21,8 @@ import {
 } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import { ThemeToggle } from "@/components/theme-toggle"
+import AuthButton from "@/components/AuthButton"
+import RoastGenerator from "@/components/RoastGenerator"
 
 const Index = () => {
   const navigate = useNavigate()
@@ -97,6 +99,9 @@ const Index = () => {
             <Button variant="ghost" onClick={() => scrollToSection('features')} className="text-foreground hover:text-primary">
               Features
             </Button>
+            <Button variant="ghost" onClick={() => scrollToSection('roast')} className="text-foreground hover:text-primary">
+              Get Roasted
+            </Button>
             <Button variant="ghost" onClick={() => scrollToSection('testimonials')} className="text-foreground hover:text-primary">
               Testimonials
             </Button>
@@ -104,9 +109,7 @@ const Index = () => {
             <Button variant="ghost" onClick={() => navigate('/dashboard?demo=true')} className="text-foreground hover:text-primary">
               Try Demo
             </Button>
-            <Button onClick={() => navigate('/dashboard')} className="bg-primary text-primary-foreground hover:bg-primary/90">
-              Get Started
-            </Button>
+            <AuthButton />
           </div>
         </div>
       </nav>
@@ -140,15 +143,19 @@ const Index = () => {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
-              <Button 
+              <AuthButton 
                 size="lg" 
                 className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg"
-                onClick={() => navigate('/dashboard')}
+                buttonText="Start Getting Roasted"
+                icon={<ArrowRight className="ml-2 h-4 w-4" />}
+              />
+              <Button 
+                size="lg" 
+                variant="outline" 
+                className="border-border text-foreground hover:bg-card"
+                onClick={() => scrollToSection('roast')}
               >
-                Start Getting Roasted <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-              <Button size="lg" variant="outline" className="border-border text-foreground hover:bg-card">
-                Watch Demo
+                Try a Free Roast First
               </Button>
             </div>
 
@@ -215,6 +222,27 @@ const Index = () => {
         </div>
       </section>
 
+      {/* Roast Generator Section */}
+      <section id="roast" className="py-20 px-4 bg-background">
+        <div className="container mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-4xl font-bold mb-4 text-foreground">
+              Get Your <span className="text-primary">Free Roast</span>
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              Experience TaskTuner's savage AI coach. No signup required - just pure, unfiltered motivation.
+            </p>
+          </motion.div>
+
+          <RoastGenerator />
+        </div>
+      </section>
+
       {/* Testimonials Section */}
       <section id="testimonials" className="py-20 px-4">
         <div className="container mx-auto">
@@ -271,19 +299,18 @@ const Index = () => {
             transition={{ duration: 0.6 }}
           >
             <h2 className="text-4xl md:text-5xl font-bold text-primary-foreground mb-6">
-              Ready to Stop Making Excuses?
+              How Did That Roast Feel?
             </h2>
             <p className="text-xl text-primary-foreground/90 mb-8 max-w-2xl mx-auto">
-              Join thousands of reformed procrastinators who finally got their act together.
+              If you're ready to turn that brutal honesty into real productivity, join thousands who finally got their act together.
             </p>
-            <Button 
+            <AuthButton 
               size="lg" 
-              variant="secondary"
+              variant="default"
               className="bg-background text-foreground hover:bg-background/90"
-              onClick={() => navigate('/dashboard')}
-            >
-              Start Your Transformation <CheckCircle className="ml-2 h-4 w-4" />
-            </Button>
+              buttonText="Start Your Transformation"
+              icon={<CheckCircle className="ml-2 h-4 w-4" />}
+            />
           </motion.div>
         </div>
       </section>
