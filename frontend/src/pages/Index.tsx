@@ -13,6 +13,7 @@ import {
   CheckCircle, 
   Target,
   BarChart3,
+  Clock,
   Github,
   Twitter,
   Instagram,
@@ -23,6 +24,13 @@ import { ThemeToggle } from "@/components/theme-toggle"
 
 const Index = () => {
   const navigate = useNavigate()
+
+  const scrollToSection = (sectionId: string) => {
+    const element = document.getElementById(sectionId)
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' })
+    }
+  }
 
   const features = [
     {
@@ -41,6 +49,11 @@ const Index = () => {
       description: "Turn massive goals into bite-sized, achievable tasks"
     },
     {
+      icon: Clock,
+      title: "Focus Mode",
+      description: "Pomodoro timer with AI-powered break suggestions and distraction blocking"
+    },
+    {
       icon: Trophy,
       title: "Gamified Progress",
       description: "Earn XP, build streaks, and compete with friends"
@@ -50,17 +63,17 @@ const Index = () => {
   const testimonials = [
     {
       quote: "TaskTuner roasted me so hard I actually started doing my assignments 😭",
-      author: "Sarah, College Student",
+      author: "Priya, College Student",
       rating: 5
     },
     {
       quote: "Finally, an app that doesn't sugarcoat my productivity issues",  
-      author: "Mike, Developer",
+      author: "Rohit, Developer",
       rating: 5
     },
     {
       quote: "The AI coach is savage but it WORKS. 10/10 would get roasted again",
-      author: "Alex, Entrepreneur", 
+      author: "Arjun, Entrepreneur", 
       rating: 5
     }
   ]
@@ -81,6 +94,12 @@ const Index = () => {
           </div>
           
           <div className="flex items-center space-x-4">
+            <Button variant="ghost" onClick={() => scrollToSection('features')} className="text-foreground hover:text-primary">
+              Features
+            </Button>
+            <Button variant="ghost" onClick={() => scrollToSection('testimonials')} className="text-foreground hover:text-primary">
+              Testimonials
+            </Button>
             <ThemeToggle />
             <Button variant="ghost" onClick={() => navigate('/dashboard')} className="text-foreground hover:text-primary">
               Try Demo
@@ -155,7 +174,7 @@ const Index = () => {
       </section>
 
       {/* Features Section */}
-      <section className="py-20 px-4 bg-muted/30">
+      <section id="features" className="py-20 px-4 bg-muted/30">
         <div className="container mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -197,7 +216,7 @@ const Index = () => {
       </section>
 
       {/* Testimonials Section */}
-      <section className="py-20 px-4">
+      <section id="testimonials" className="py-20 px-4">
         <div className="container mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}

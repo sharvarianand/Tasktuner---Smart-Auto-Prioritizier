@@ -243,7 +243,7 @@ const Calendar = () => {
                 <div className="flex items-center justify-between p-3 bg-green-100 dark:bg-green-900 rounded-lg">
                   <div>
                     <p className="font-medium text-sm">Connected</p>
-                    <p className="text-xs text-muted-foreground">john@example.com</p>
+                    <p className="text-xs text-muted-foreground">aarav@example.com</p>
                   </div>
                   <Badge variant="secondary">Active</Badge>
                 </div>

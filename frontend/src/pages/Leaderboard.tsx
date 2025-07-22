@@ -35,7 +35,7 @@ const Leaderboard = () => {
   const globalLeaderboard: LeaderboardUser[] = [
     {
       id: 1,
-      name: "Alex Rodriguez",
+      name: "Aditya Patel",
       avatar: "/api/placeholder/40/40",
       xp: 4250,
       streak: 28,
@@ -46,7 +46,7 @@ const Leaderboard = () => {
     },
     {
       id: 2,
-      name: "Sarah Chen",
+      name: "Kavya Gupta",
       avatar: "/api/placeholder/40/40",
       xp: 3890,
       streak: 21,
@@ -57,7 +57,7 @@ const Leaderboard = () => {
     },
     {
       id: 3,
-      name: "Mike Johnson",
+      name: "Ravi Kumar",
       avatar: "/api/placeholder/40/40",
       xp: 3650,
       streak: 15,
@@ -68,7 +68,7 @@ const Leaderboard = () => {
     },
     {
       id: 4,
-      name: "Emma Davis",
+      name: "Ananya Singh",
       avatar: "/api/placeholder/40/40",
       xp: 3420,
       streak: 19,
@@ -93,7 +93,7 @@ const Leaderboard = () => {
   const friendsLeaderboard: LeaderboardUser[] = [
     {
       id: 1,
-      name: "Jessica Park",
+      name: "Ishita Mehta",
       avatar: "/api/placeholder/40/40",
       xp: 2850,
       streak: 12,
@@ -113,7 +113,7 @@ const Leaderboard = () => {
     },
     {
       id: 3,
-      name: "David Kim",
+      name: "Vikash Reddy",
       avatar: "/api/placeholder/40/40",
       xp: 1950,
       streak: 5,

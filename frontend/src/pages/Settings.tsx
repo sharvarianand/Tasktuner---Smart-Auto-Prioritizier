@@ -80,10 +80,10 @@ const Settings = () => {
   })
 
   const [profile, setProfile] = useState({
-    name: "John Doe",
-    email: "john@example.com",
+    name: "Aarav Sharma",
+    email: "aarav@example.com",
     bio: "Aspiring developer trying to get my life together, one task at a time.",
-    timezone: "America/New_York"
+    timezone: "Asia/Kolkata"
   })
 
   const updateSetting = (category: string, key: string, value: any) => {
