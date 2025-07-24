@@ -141,10 +141,10 @@ const RoastGenerator = () => {
       setCurrentRoast(randomRoast);
       setIsAnimating(false);
       
-      // Speak the new roast if voice is enabled
-      if (settings.enabled) {
-        setTimeout(() => speakRoast(randomRoast.message), 100);
-      }
+      // Don't auto-speak - let user click "Speak This Roast" button manually
+      // if (settings.enabled) {
+      //   setTimeout(() => speakRoast(randomRoast.message), 100);
+      // }
     }, 300);
   };
 
@@ -166,21 +166,22 @@ const RoastGenerator = () => {
     }
   }, []);
 
-  // Auto-speak when voice is enabled and roast changes (only for manual roast generation)
-  useEffect(() => {
-    if (settings.enabled && !isAnimating && currentRoast.id !== roasts[0].id) {
-      // Only auto-speak if it's not the initial roast
-      console.log('Auto-speaking roast:', currentRoast.message);
-      setTimeout(() => {
-        speakRoast(currentRoast.message);
-      }, 300);
-    }
-  }, [currentRoast, settings.enabled, isAnimating]);
+  // Only auto-speak when user manually generates a new roast, not on component load
+  // useEffect(() => {
+  //   if (settings.enabled && !isAnimating && currentRoast.id !== roasts[0].id) {
+  //     // Only auto-speak if it's not the initial roast
+  //     console.log('Auto-speaking roast:', currentRoast.message);
+  //     setTimeout(() => {
+  //       speakRoast(currentRoast.message);
+  //     }, 300);
+  //   }
+  // }, [currentRoast, settings.enabled, isAnimating]);
 
-  useEffect(() => {
-    const interval = setInterval(generateNewRoast, 5000);
-    return () => clearInterval(interval);
-  }, []);
+  // Remove the auto-generating interval that was causing continuous speech
+  // useEffect(() => {
+  //   const interval = setInterval(generateNewRoast, 5000);
+  //   return () => clearInterval(interval);
+  // }, []);
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {

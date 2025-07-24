@@ -129,7 +129,7 @@ const Calendar = () => {
               Sync Calendar
             </Button>
             
-            <Button className="bg-gradient-primary gap-2">
+            <Button className="bg-primary text-primary-foreground shadow-glow hover:bg-primary/90 gap-2">
               <Plus className="h-4 w-4" />
               Add Event
             </Button>

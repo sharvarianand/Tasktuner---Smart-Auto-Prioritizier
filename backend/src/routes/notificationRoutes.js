@@ -11,4 +11,10 @@ router.get('/:userId', notificationController.getNotifications);
 // PATCH /api/notifications/:id/read
 router.patch('/:id/read', notificationController.markAsRead);
 
+// DELETE /api/notifications/:id
+router.delete('/:id', notificationController.deleteNotification);
+
+// DELETE /api/notifications/clear/:userId
+router.delete('/clear/:userId', notificationController.clearReadNotifications);
+
 module.exports = router;

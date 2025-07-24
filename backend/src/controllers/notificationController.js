@@ -55,8 +55,48 @@ const markAsRead = async (req, res) => {
   }
 };
 
+// 🔹 Delete Notification
+const deleteNotification = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    await db.collection('notifications').doc(id).delete();
+
+    res.status(200).json({ message: "Notification deleted successfully" });
+  } catch (error) {
+    console.error("❌ Error deleting notification:", error);
+    res.status(500).json({ error: "Failed to delete notification" });
+  }
+};
+
+// 🔹 Clear All Read Notifications for User
+const clearReadNotifications = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const snapshot = await db.collection('notifications')
+      .where('userId', '==', userId)
+      .where('read', '==', true)
+      .get();
+
+    const batch = db.batch();
+    snapshot.docs.forEach(doc => {
+      batch.delete(doc.ref);
+    });
+
+    await batch.commit();
+
+    res.status(200).json({ message: `Cleared ${snapshot.docs.length} read notifications` });
+  } catch (error) {
+    console.error("❌ Error clearing read notifications:", error);
+    res.status(500).json({ error: "Failed to clear read notifications" });
+  }
+};
+
 module.exports = {
   createNotification,
   getNotifications,
   markAsRead,
+  deleteNotification,
+  clearReadNotifications,
 };

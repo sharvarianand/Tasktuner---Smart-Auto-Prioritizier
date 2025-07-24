@@ -243,7 +243,7 @@ const Goals = () => {
           
           <Dialog>
             <DialogTrigger asChild>
-              <Button className="bg-gradient-primary text-white shadow-glow">
+              <Button className="bg-primary text-primary-foreground shadow-glow hover:bg-primary/90">
                 <Plus className="mr-2 h-4 w-4" />
                 Add Goal
               </Button>

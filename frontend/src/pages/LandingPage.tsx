@@ -3,7 +3,6 @@ import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { useUser } from "@clerk/clerk-react"
 import { 
   Zap, 
   Calendar, 
@@ -27,7 +26,6 @@ import RoastGenerator from "@/components/RoastGenerator"
 
 const Index = () => {
   const navigate = useNavigate()
-  const { isSignedIn } = useUser()
 
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId)
@@ -108,11 +106,9 @@ const Index = () => {
               Testimonials
             </Button>
             <ThemeToggle />
-            {!isSignedIn && (
-              <Button variant="ghost" onClick={() => navigate('/dashboard?demo=true')} className="text-foreground hover:text-primary">
-                Try Demo
-              </Button>
-            )}
+            <Button variant="ghost" onClick={() => navigate('/dashboard?demo=true')} className="text-foreground hover:text-primary">
+              Try Demo
+            </Button>
             <AuthButton />
           </div>
         </div>
@@ -146,6 +142,23 @@ const Index = () => {
               syncs your calendar, and roasts your excuses into oblivion.
             </p>
 
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
+              <AuthButton 
+                size="lg" 
+                className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg"
+                buttonText="Start Getting Roasted"
+                icon={<ArrowRight className="ml-2 h-4 w-4" />}
+              />
+              <Button 
+                size="lg" 
+                variant="outline" 
+                className="border-border text-foreground hover:bg-card"
+                onClick={() => scrollToSection('roast')}
+              >
+                Try a Free Roast First
+              </Button>
+            </div>
+
             {/* Hero Illustration */}
             <motion.div
               className="w-full max-w-2xl mx-auto h-64 bg-card rounded-2xl flex items-center justify-center border border-border"
@@ -153,28 +166,6 @@ const Index = () => {
               transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
             >
               <div className="text-6xl">🔥📋</div>
-            </motion.div>
-
-            {/* CTA Buttons */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-              className="mt-8 flex flex-col sm:flex-row gap-4 justify-center items-center"
-            >
-              {!isSignedIn && (
-                <AuthButton 
-                  className="px-8 py-3 text-lg font-semibold bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
-                  buttonText="Start Getting Roasted"
-                />
-              )}
-              <Button
-                variant="outline"
-                onClick={() => scrollToSection('features')}
-                className="px-8 py-3 text-lg border-primary/30 text-foreground hover:bg-primary/10 rounded-xl transition-colors duration-200"
-              >
-                See How It Works
-              </Button>
             </motion.div>
 
             {/* Scroll indicator */}
@@ -336,15 +327,13 @@ const Index = () => {
             <p className="text-xl text-primary-foreground/90 mb-8 max-w-2xl mx-auto">
               If you're ready to turn that brutal honesty into real productivity, join thousands who finally got their act together.
             </p>
-            {!isSignedIn && (
-              <AuthButton 
-                size="lg" 
-                variant="default"
-                className="bg-background text-foreground hover:bg-background/90"
-                buttonText="Start Your Transformation"
-                icon={<CheckCircle className="ml-2 h-4 w-4" />}
-              />
-            )}
+            <AuthButton 
+              size="lg" 
+              variant="default"
+              className="bg-background text-foreground hover:bg-background/90"
+              buttonText="Start Your Transformation"
+              icon={<CheckCircle className="ml-2 h-4 w-4" />}
+            />
           </motion.div>
         </div>
       </section>

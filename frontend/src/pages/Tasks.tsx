@@ -20,6 +20,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -35,7 +36,13 @@ import {
   Star,
   Filter,
   RefreshCw,
-  Calendar
+  Calendar,
+  Sparkles,
+  Brain,
+  Zap,
+  Edit,
+  Save,
+  X
 } from "lucide-react"
 import { toast } from "sonner"
 import { taskApi } from "@/lib/api"
@@ -86,6 +93,10 @@ const Tasks = () => {
   const [filterPriority, setFilterPriority] = useState<string>('all')
   const [filterCategory, setFilterCategory] = useState<string>('all')
   const [showCompleted, setShowCompleted] = useState(false)
+  const [isPrioritizing, setIsPrioritizing] = useState(false)
+  const [lastPrioritized, setLastPrioritized] = useState<Date | null>(null)
+  const [editingTask, setEditingTask] = useState<Task | null>(null)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
 
   // Load tasks and stats on component mount
   useEffect(() => {
@@ -179,6 +190,102 @@ const Tasks = () => {
       toast.error('Failed to delete task. Please try again.')
     }
   }
+
+  // Edit task functionality
+  const startEditTask = (task: Task) => {
+    setEditingTask({
+      ...task,
+      // Convert Date objects to strings for form inputs
+      dueDate: task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : ''
+    })
+    setIsEditDialogOpen(true)
+  }
+
+  const saveEditTask = async () => {
+    if (!editingTask || !editingTask.title.trim()) {
+      toast.error("Task title is required!")
+      return
+    }
+
+    try {
+      const updatedTask = await taskApi.updateTask(editingTask.id, {
+        title: editingTask.title,
+        description: editingTask.description,
+        priority: editingTask.priority,
+        category: editingTask.category,
+        dueDate: editingTask.dueDate,
+        isDaily: editingTask.isDaily
+      })
+      
+      setTasks(tasks.map(t => t.id === editingTask.id ? { ...t, ...updatedTask } : t))
+      setIsEditDialogOpen(false)
+      setEditingTask(null)
+      
+      toast.success("Task updated successfully! 📝")
+    } catch (error) {
+      console.error('Error updating task:', error)
+      toast.error('Failed to update task. Please try again.')
+    }
+  }
+
+  const cancelEdit = () => {
+    setIsEditDialogOpen(false)
+    setEditingTask(null)
+  }
+
+  // Smart Auto Prioritization function
+  const smartPrioritizeTasks = async () => {
+    if (tasks.length < 2) {
+      toast.error("Add at least 2 tasks to use Smart Auto Prioritization!")
+      return
+    }
+
+    try {
+      setIsPrioritizing(true)
+      toast.loading("AI is analyzing your tasks... 🧠", { id: 'prioritizing' })
+
+      // Prepare tasks data for AI analysis
+      const tasksForAI = tasks.map(task => ({
+        id: task.id,
+        title: task.title,
+        description: task.description || '',
+        priority: task.priority,
+        category: task.category,
+        dueDate: task.dueDate,
+        completed: task.completed,
+        isDaily: task.isDaily,
+        points: task.points
+      }))
+
+      const response = await taskApi.prioritizeTasks(tasksForAI)
+      
+      if (response.prioritizedTasks && response.prioritizedTasks.length > 0) {
+        // Reorder tasks based on AI prioritization
+        const prioritizedOrder = response.prioritizedTasks
+        const reorderedTasks = prioritizedOrder.map((prioritizedTask: any) => 
+          tasks.find(task => task.id === prioritizedTask.id)
+        ).filter(Boolean) as Task[]
+
+        // Add any tasks that might have been missed
+        const missingTasks = tasks.filter(task => 
+          !reorderedTasks.find(reordered => reordered.id === task.id)
+        )
+        
+        setTasks([...reorderedTasks, ...missingTasks])
+        setLastPrioritized(new Date())
+        
+        toast.success("🎯 Tasks prioritized by AI! Check the new order.", { id: 'prioritizing' })
+      } else {
+        toast.error("AI prioritization failed. Try again later.", { id: 'prioritizing' })
+      }
+    } catch (error) {
+      console.error('Error prioritizing tasks:', error)
+      toast.error('Smart prioritization failed. Please try again.', { id: 'prioritizing' })
+    } finally {
+      setIsPrioritizing(false)
+    }
+  }
+
   const generateRoast = () => {
     const roasts = [
       "Another task? At this rate you'll finish by 2030 🐌",
@@ -229,7 +336,7 @@ const Tasks = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="grid grid-cols-1 md:grid-cols-3 gap-4"
+          className={`grid grid-cols-1 md:grid-cols-${lastPrioritized ? '4' : '3'} gap-4`}
         >
           <Card>
             <CardContent className="pt-6">
@@ -266,18 +373,35 @@ const Tasks = () => {
               </div>
             </CardContent>
           </Card>
+
+          {/* AI Insights Card - Only show if tasks have been prioritized */}
+          {lastPrioritized && (
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">AI Prioritized</p>
+                    <p className="text-2xl font-bold">{filteredTasks.length}</p>
+                    <p className="text-xs text-purple-600 mt-1">Smart order active</p>
+                  </div>
+                  <Brain className="h-8 w-8 text-purple-500" />
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </motion.div>
 
         {/* Add Task & Filters */}
         <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="bg-gradient-primary text-white shadow-glow">
-                <Plus className="mr-2 h-4 w-4" />
-                Add Task
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button className="bg-primary text-primary-foreground shadow-glow hover:bg-primary/90">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Task
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
               <DialogHeader>
                 <DialogTitle>Add New Task</DialogTitle>
                 <DialogDescription>
@@ -352,7 +476,35 @@ const Tasks = () => {
               </div>
             </DialogContent>
           </Dialog>
-          
+
+          {/* Smart Auto Prioritization Button */}
+          {tasks.length >= 2 && (
+            <div className="flex flex-col gap-2">
+              <Button
+                onClick={smartPrioritizeTasks}
+                disabled={isPrioritizing}
+                className="bg-purple-600 hover:bg-purple-700 text-white shadow-lg"
+              >
+                {isPrioritizing ? (
+                  <>
+                    <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                    AI Analyzing...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="mr-2 h-4 w-4" />
+                    Smart Auto Prioritize
+                  </>
+                )}
+              </Button>
+              {!lastPrioritized && (
+                <p className="text-xs text-muted-foreground text-center max-w-48">
+                  AI analyzes deadlines, priority, and impact to reorder your tasks optimally
+                </p>
+              )}
+            </div>
+          )}
+          </div>
           {/* Filters */}
           <div className="flex gap-2 items-center">
             <Filter className="h-4 w-4 text-muted-foreground" />
@@ -401,6 +553,30 @@ const Tasks = () => {
           </div>
         </div>
 
+        {/* Smart Prioritization Indicator */}
+        {lastPrioritized && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-3"
+          >
+            <div className="flex items-center gap-2 text-sm">
+              <Brain className="h-4 w-4 text-purple-600" />
+              <span className="text-purple-700 dark:text-purple-300">
+                Tasks automatically prioritized by AI on {lastPrioritized.toLocaleString()}
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setLastPrioritized(null)}
+                className="ml-auto h-6 w-6 p-0 text-purple-600 hover:text-purple-700"
+              >
+                ×
+              </Button>
+            </div>
+          </motion.div>
+        )}
+
         {/* Tasks List */}
         <div className="space-y-4">
           {filteredTasks.map((task, index) => (
@@ -440,6 +616,13 @@ const Tasks = () => {
                           )}
                         </div>
                         <div className="flex items-center gap-2">
+                          {/* AI Priority Position Indicator */}
+                          {lastPrioritized && (
+                            <Badge variant="secondary" className="text-xs bg-purple-100 text-purple-700 border-purple-200">
+                              <Zap className="h-3 w-3 mr-1" />
+                              #{index + 1} AI
+                            </Badge>
+                          )}
                           <Badge variant={getPriorityColor(task.priority)}>
                             {task.priority}
                           </Badge>
@@ -472,14 +655,24 @@ const Tasks = () => {
                           </div>
                         )}
                         
-                        <DemoRestrictedButton
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => deleteTask(task.id)}
-                          className="text-destructive hover:text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </DemoRestrictedButton>
+                        <div className="flex gap-1">
+                          <DemoRestrictedButton
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => startEditTask(task)}
+                            className="text-muted-foreground hover:text-primary"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </DemoRestrictedButton>
+                          <DemoRestrictedButton
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => deleteTask(task.id)}
+                            className="text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </DemoRestrictedButton>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -506,6 +699,109 @@ const Tasks = () => {
           )}
         </div>
       </div>
+
+      {/* Edit Task Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Edit Task</DialogTitle>
+            <DialogDescription>
+              Make changes to your task here. Click save when you're done.
+            </DialogDescription>
+          </DialogHeader>
+          {editingTask && (
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <label htmlFor="edit-title" className="text-sm font-medium">
+                  Title
+                </label>
+                <Input
+                  id="edit-title"
+                  value={editingTask.title}
+                  onChange={(e) => setEditingTask({...editingTask, title: e.target.value})}
+                />
+              </div>
+              <div className="grid gap-2">
+                <label htmlFor="edit-description" className="text-sm font-medium">
+                  Description
+                </label>
+                <Textarea
+                  id="edit-description"
+                  value={editingTask.description || ''}
+                  onChange={(e) => setEditingTask({...editingTask, description: e.target.value})}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <label htmlFor="edit-priority" className="text-sm font-medium">
+                    Priority
+                  </label>
+                  <Select 
+                    value={editingTask.priority} 
+                    onValueChange={(value) => setEditingTask({...editingTask, priority: value as Task['priority']})}
+                  >
+                    <SelectTrigger id="edit-priority">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Low">Low</SelectItem>
+                      <SelectItem value="Medium">Medium</SelectItem>
+                      <SelectItem value="High">High</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid gap-2">
+                  <label htmlFor="edit-category" className="text-sm font-medium">
+                    Category
+                  </label>
+                  <Select 
+                    value={editingTask.category} 
+                    onValueChange={(value) => setEditingTask({...editingTask, category: value as Task['category']})}
+                  >
+                    <SelectTrigger id="edit-category">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Personal">Personal</SelectItem>
+                      <SelectItem value="Work">Work</SelectItem>
+                      <SelectItem value="Academic">Academic</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid gap-2">
+                <label htmlFor="edit-dueDate" className="text-sm font-medium">
+                  Due Date
+                </label>
+                <Input
+                  id="edit-dueDate"
+                  type="datetime-local"
+                  value={editingTask.dueDate ? new Date(editingTask.dueDate).toISOString().slice(0, 16) : ''}
+                  onChange={(e) => setEditingTask({...editingTask, dueDate: e.target.value ? new Date(e.target.value).toISOString() : undefined})}
+                />
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="edit-isDaily"
+                  checked={editingTask.isDaily || false}
+                  onCheckedChange={(checked) => setEditingTask({...editingTask, isDaily: !!checked})}
+                />
+                <label htmlFor="edit-isDaily" className="text-sm font-medium">
+                  Daily recurring task
+                </label>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={cancelEdit}>
+              Cancel
+            </Button>
+            <Button type="button" onClick={saveEditTask}>
+              Save changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   )
 }

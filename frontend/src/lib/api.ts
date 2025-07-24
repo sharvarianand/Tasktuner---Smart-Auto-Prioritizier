@@ -118,6 +118,20 @@ export const taskApi = {
       };
     }
   },
+
+  // Smart Auto Prioritization using AI
+  prioritizeTasks: async (tasks: any[]) => {
+    try {
+      return await apiClient('/ai/prioritize', {
+        method: 'POST',
+        body: JSON.stringify({ tasks }),
+      });
+    } catch (error) {
+      console.error('Failed to prioritize tasks:', error);
+      // Return original tasks order on error
+      return { prioritizedTasks: tasks };
+    }
+  },
 };
 
 export default apiClient;

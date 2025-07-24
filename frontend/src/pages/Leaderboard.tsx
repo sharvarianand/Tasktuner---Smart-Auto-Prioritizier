@@ -119,7 +119,7 @@ const Leaderboard = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
         >
-          <Card className="bg-gradient-primary text-white relative overflow-hidden">
+          <Card className="bg-primary text-primary-foreground relative overflow-hidden">
             <div className="absolute inset-0 bg-black/10" />
             <CardContent className="pt-6 relative z-10">
               <div className="flex items-center justify-between">
