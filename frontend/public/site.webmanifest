@@ -4,18 +4,18 @@
   "description": "AI-powered productivity app that roasts you into action",
   "icons": [
     {
-      "src": "/tasktuner icon.png",
-      "sizes": "any",
+      "src": "/tasktuner-icon.png",
+      "sizes": "48x48",
       "type": "image/png"
     },
     {
-      "src": "/tasktuner icon.png",
-      "sizes": "192x192",
+      "src": "/tasktuner-icon.png",
+      "sizes": "96x96",
       "type": "image/png"
     },
     {
-      "src": "/tasktuner icon.png",
-      "sizes": "512x512",
+      "src": "/tasktuner-icon.png",
+      "sizes": "144x144",
       "type": "image/png"
     }
   ],

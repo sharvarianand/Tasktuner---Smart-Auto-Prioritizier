@@ -213,7 +213,7 @@ const RoastGenerator = () => {
         animate={{ opacity: isAnimating ? 0.5 : 1, y: 0, scale: 1 }}
         transition={{ duration: 0.3 }}
       >
-        <Card className="bg-card border-border shadow-lg">
+        <Card className="bg-card border-border shadow-lg overflow-hidden">
           <CardHeader className="text-center pb-4">
             <div className="flex items-center justify-center mb-4">
               <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
@@ -227,55 +227,61 @@ const RoastGenerator = () => {
               {getSeverityLabel(currentRoast.severity)}
             </Badge>
           </CardHeader>
-          <CardContent className="text-center space-y-6">
+          <CardContent className="text-center space-y-6 px-6 pb-6">
             <blockquote className="text-xl font-medium text-card-foreground leading-relaxed">
               "{currentRoast.message}"
             </blockquote>
             
-            <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
-              <Button
-                variant="outline"
-                onClick={generateNewRoast}
-                disabled={isAnimating}
-                className="flex items-center gap-2"
-              >
-                <RefreshCw className={`w-4 h-4 ${isAnimating ? 'animate-spin' : ''}`} />
-                Get Another Roast
-              </Button>
+            <div className="flex flex-col gap-3 justify-center items-stretch">
+              {/* First row - Get Another Roast and Voice controls */}
+              <div className="flex flex-col sm:flex-row gap-2 justify-center">
+                <Button
+                  variant="outline"
+                  onClick={generateNewRoast}
+                  disabled={isAnimating}
+                  className="flex items-center justify-center gap-2 flex-1 sm:flex-none"
+                >
+                  <RefreshCw className={`w-4 h-4 ${isAnimating ? 'animate-spin' : ''}`} />
+                  Get Another Roast
+                </Button>
 
-              <Button
-                variant="outline"
-                onClick={() => speakRoast(currentRoast.message)}
-                disabled={!settings.enabled || isSpeaking}
-                className="flex items-center gap-2"
-              >
-                {isSpeaking ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-                {isSpeaking ? 'Speaking...' : 'Speak This Roast'}
-              </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => speakRoast(currentRoast.message)}
+                  disabled={!settings.enabled || isSpeaking}
+                  className="flex items-center justify-center gap-2 flex-1 sm:flex-none"
+                >
+                  {isSpeaking ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                  {isSpeaking ? 'Speaking...' : 'Speak This Roast'}
+                </Button>
 
-              <Button
-                variant="outline"
-                onClick={toggleVoice}
-                className={`flex items-center gap-2 ${settings.enabled ? 'bg-primary/10 text-primary border-primary' : ''}`}
-              >
-                {settings.enabled ? (
-                  <>
-                    <Volume2 className="w-4 h-4" />
-                    Voice On
-                  </>
-                ) : (
-                  <>
-                    <VolumeX className="w-4 h-4" />
-                    Voice Off
-                  </>
-                )}
-              </Button>
+                <Button
+                  variant="outline"
+                  onClick={toggleVoice}
+                  className={`flex items-center justify-center gap-2 flex-1 sm:flex-none ${settings.enabled ? 'bg-primary/10 text-primary border-primary' : ''}`}
+                >
+                  {settings.enabled ? (
+                    <>
+                      <Volume2 className="w-4 h-4" />
+                      Voice On
+                    </>
+                  ) : (
+                    <>
+                      <VolumeX className="w-4 h-4" />
+                      Voice Off
+                    </>
+                  )}
+                </Button>
+              </div>
               
-              <AuthButton 
-                buttonText="Start Being Productive"
-                className="bg-primary text-primary-foreground hover:bg-primary/90"
-                icon={<Zap className="w-4 h-4 mr-2" />}
-              />
+              {/* Second row - Start Being Productive */}
+              <div className="flex justify-center">
+                <AuthButton 
+                  buttonText="Start Being Productive"
+                  className="bg-primary text-primary-foreground hover:bg-primary/90 w-full sm:w-auto"
+                  icon={<Zap className="w-4 h-4 mr-2" />}
+                />
+              </div>
             </div>
           </CardContent>
         </Card>
