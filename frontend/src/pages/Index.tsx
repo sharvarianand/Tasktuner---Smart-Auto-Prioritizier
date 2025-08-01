@@ -88,8 +88,8 @@ const Index = () => {
       <nav className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
-              <CheckCircle className="h-6 w-6 text-primary-foreground" />
+            <div className="w-10 h-10 rounded-xl overflow-hidden">
+              <img src="/Tasktuner_logo.png" alt="TaskTuner Logo" className="w-full h-full object-cover" />
             </div>
             <div className="flex flex-col">
               <span className="text-xl font-bold text-foreground">TaskTuner</span>
@@ -363,14 +363,7 @@ const Index = () => {
               </div>
             </div>
             
-            <div className="flex space-x-6 text-sm text-muted-foreground">
-              <a href="#" className="hover:text-card-foreground transition-colors">About</a>
-              <a href="#" className="hover:text-card-foreground transition-colors">Privacy</a>
-              <a href="#" className="hover:text-card-foreground transition-colors">Terms</a>
-              <a href="#" className="hover:text-card-foreground transition-colors">Contact</a>
-            </div>
-            
-            <div className="flex space-x-4 mt-4 md:mt-0">
+            <div className="flex space-x-4">
               <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-card-foreground">
                 <Github className="h-4 w-4" />
               </Button>

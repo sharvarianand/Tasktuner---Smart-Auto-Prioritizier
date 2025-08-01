@@ -1,5 +1,5 @@
 
-import { Calendar, CheckSquare, Target, BarChart3, Trophy, Settings, Bell, Home, CheckCircle, Timer } from "lucide-react"
+import { Calendar, CheckSquare, Target, BarChart3, Trophy, Settings, Bell, Home, Timer } from "lucide-react"
 import { NavLink, useLocation } from "react-router-dom"
 import {
   Sidebar,
@@ -43,8 +43,8 @@ export function AppSidebar() {
       <SidebarHeader className="p-6 border-b border-sidebar-border">
         {!isCollapsed && (
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
-              <CheckCircle className="text-primary-foreground h-6 w-6" />
+            <div className="w-10 h-10 rounded-xl overflow-hidden">
+              <img src="/Tasktuner_logo.png" alt="TaskTuner Logo" className="w-full h-full object-cover" />
             </div>
             <div className="flex flex-col">
               <h2 className="text-xl font-bold text-sidebar-foreground">TaskTuner</h2>
@@ -53,8 +53,8 @@ export function AppSidebar() {
           </div>
         )}
         {isCollapsed && (
-          <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center mx-auto">
-            <CheckCircle className="text-primary-foreground h-6 w-6" />
+          <div className="w-10 h-10 rounded-xl overflow-hidden mx-auto">
+            <img src="/Tasktuner_logo.png" alt="TaskTuner Logo" className="w-full h-full object-cover" />
           </div>
         )}
       </SidebarHeader>

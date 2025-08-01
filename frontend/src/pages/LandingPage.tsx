@@ -352,14 +352,7 @@ const Index = () => {
               </div>
             </div>
             
-            <div className="flex space-x-6 text-sm text-muted-foreground">
-              <a href="#" className="hover:text-card-foreground transition-colors">About</a>
-              <a href="#" className="hover:text-card-foreground transition-colors">Privacy</a>
-              <a href="#" className="hover:text-card-foreground transition-colors">Terms</a>
-              <a href="#" className="hover:text-card-foreground transition-colors">Contact</a>
-            </div>
-            
-            <div className="flex space-x-4 mt-4 md:mt-0">
+            <div className="flex space-x-4">
               <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-card-foreground">
                 <Github className="h-4 w-4" />
               </Button>
