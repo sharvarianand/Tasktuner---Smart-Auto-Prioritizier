@@ -1,0 +1,17 @@
+# Redirect all traffic to index.html for SPA routing
+/*    /index.html   200
+
+# API routes should go to backend (if needed)
+/api/*  https://your-backend-url.com/api/:splat  200
+
+# Handle specific routes for better SEO (optional)
+/dashboard  /index.html  200
+/tasks      /index.html  200
+/calendar   /index.html  200
+/analytics  /index.html  200
+/settings   /index.html  200
+/focus      /index.html  200
+/goals      /index.html  200
+/roast      /index.html  200
+/notifications /index.html  200
+/leaderboard   /index.html  200

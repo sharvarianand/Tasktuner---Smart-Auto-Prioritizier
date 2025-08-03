@@ -13,6 +13,7 @@ import {
   DemoRestrictedSwitch 
 } from "@/components/demo-restriction"
 import { useDemoMode } from "@/contexts/DemoContext"
+import { CalendarSettings } from "@/components/CalendarSettings"
 import { 
   Select,
   SelectContent,
@@ -306,6 +307,9 @@ const Settings = () => {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Calendar Integration */}
+            <CalendarSettings isDemo={isDemoMode} />
 
             {/* Data & Privacy */}
             <Card>

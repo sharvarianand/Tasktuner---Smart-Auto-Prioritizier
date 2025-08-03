@@ -51,10 +51,14 @@ const createTask = async (req, res) => {
       description, 
       deadline, 
       dueDate,
+      startTime,
+      endTime,
       priority, 
       category, 
       isDaily,
-      points 
+      points,
+      reminders,
+      addToCalendar
     } = req.body;
 
     const taskData = {
@@ -63,6 +67,8 @@ const createTask = async (req, res) => {
       description: description || '',
       deadline: deadline || null,
       dueDate: dueDate ? new Date(dueDate) : null,
+      startTime: startTime || null,
+      endTime: endTime || null,
       priority: priority || 'Medium',
       category: category || 'Personal',
       completed: false,
@@ -71,12 +77,53 @@ const createTask = async (req, res) => {
       status: "pending",
       createdAt: new Date(),
       lastCompletedAt: null,
-      completedDates: [] // Track completion dates for daily tasks
+      completedDates: [], // Track completion dates for daily tasks
+      reminders: reminders || { before: 15, after: 0 },
+      calendarEventId: null
     };
 
-    const docRef = await db.collection("tasks").add(taskData);
+    // Create Google Calendar event if requested and time fields are provided
+    if (addToCalendar && startTime && endTime && dueDate) {
+      try {
+        const GoogleCalendarService = require('../services/googleCalendarService');
+        const calendarService = new GoogleCalendarService();
+        
+        // Combine date and time for calendar event
+        const startDateTime = new Date(`${dueDate}T${startTime}`);
+        const endDateTime = new Date(`${dueDate}T${endTime}`);
+        
+        const eventData = {
+          title: title,
+          description: description || `Task: ${title}`,
+          startTime: startDateTime.toISOString(),
+          endTime: endDateTime.toISOString()
+        };
+        
+        const calendarEvent = await calendarService.createEvent(eventData);
+        taskData.calendarEventId = calendarEvent.id;
+        
+        console.log('✅ Task added to Google Calendar:', calendarEvent.id);
+      } catch (calendarError) {
+        console.error('⚠️ Failed to add to calendar, but task will still be created:', calendarError.message);
+        // Don't fail the task creation if calendar integration fails
+      }
+    }
 
-    res.status(201).json({ id: docRef.id, ...taskData });
+    const docRef = await db.collection("tasks").add(taskData);
+    
+    const createdTask = { id: docRef.id, ...taskData };
+
+    // Schedule notifications if reminders are set
+    if (startTime && (reminders.before > 0 || reminders.after > 0)) {
+      try {
+        await scheduleTaskNotifications(createdTask);
+      } catch (notificationError) {
+        console.error('⚠️ Failed to schedule notifications:', notificationError.message);
+        // Don't fail task creation if notification scheduling fails
+      }
+    }
+
+    res.status(201).json(createdTask);
   } catch (error) {
     console.error("❌ Error creating task:", error);
     res.status(500).json({ error: "Failed to create task" });
@@ -253,6 +300,89 @@ const calculateUserStreak = async (userId) => {
   } catch (error) {
     console.error("Error calculating streak:", error);
     return 0;
+  }
+};
+
+// Helper function to schedule task notifications
+const scheduleTaskNotifications = async (task) => {
+  if (!task.startTime || !task.dueDate) return;
+
+  try {
+    const { createNotification } = require('./notificationController');
+    
+    // Combine date and time for notification scheduling
+    const taskDateTime = new Date(`${task.dueDate.toISOString().split('T')[0]}T${task.startTime}`);
+    
+    // Schedule "before start" notification
+    if (task.reminders.before > 0) {
+      const beforeTime = new Date(taskDateTime.getTime() - (task.reminders.before * 60 * 1000));
+      
+      // Only schedule if the notification time is in the future
+      if (beforeTime > new Date()) {
+        const beforeMessage = `⏰ Reminder: "${task.title}" starts in ${task.reminders.before} minutes!`;
+        
+        // Use setTimeout for demo purposes (in production, use a proper job scheduler like node-cron)
+        const beforeDelay = beforeTime.getTime() - Date.now();
+        if (beforeDelay > 0 && beforeDelay < 24 * 60 * 60 * 1000) { // Only schedule within 24 hours
+          setTimeout(async () => {
+            try {
+              const notificationData = {
+                userId: task.userId,
+                message: beforeMessage,
+                type: "task_reminder"
+              };
+              
+              // Create notification in database
+              await db.collection('notifications').add({
+                ...notificationData,
+                read: false,
+                createdAt: new Date().toISOString(),
+              });
+              
+              console.log(`📢 Before-start notification scheduled for task: ${task.title}`);
+            } catch (error) {
+              console.error('Error creating before-start notification:', error);
+            }
+          }, beforeDelay);
+        }
+      }
+    }
+    
+    // Schedule "after end" notification
+    if (task.reminders.after > 0 && task.endTime) {
+      const taskEndDateTime = new Date(`${task.dueDate.toISOString().split('T')[0]}T${task.endTime}`);
+      const afterTime = new Date(taskEndDateTime.getTime() + (task.reminders.after * 60 * 1000));
+      
+      if (afterTime > new Date()) {
+        const afterMessage = `✅ Follow-up: How did "${task.title}" go? Don't forget to mark it complete!`;
+        
+        const afterDelay = afterTime.getTime() - Date.now();
+        if (afterDelay > 0 && afterDelay < 24 * 60 * 60 * 1000) {
+          setTimeout(async () => {
+            try {
+              const notificationData = {
+                userId: task.userId,
+                message: afterMessage,
+                type: "task_followup"
+              };
+              
+              await db.collection('notifications').add({
+                ...notificationData,
+                read: false,
+                createdAt: new Date().toISOString(),
+              });
+              
+              console.log(`📢 After-end notification scheduled for task: ${task.title}`);
+            } catch (error) {
+              console.error('Error creating after-end notification:', error);
+            }
+          }, afterDelay);
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error scheduling task notifications:', error);
+    throw error;
   }
 };
 

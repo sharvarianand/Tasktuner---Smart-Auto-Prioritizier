@@ -14,6 +14,7 @@ import {
   DemoRestrictedInput, 
   DemoRestrictedTextarea 
 } from "@/components/demo-restriction"
+import { NotificationPermission } from "@/components/NotificationPermission"
 import { 
   Select,
   SelectContent,
@@ -48,12 +49,14 @@ import {
   Edit,
   Save,
   X,
-  CheckSquare
+  CheckSquare,
+  Bell
 } from "lucide-react"
 import { toast } from "sonner"
 import { taskApi } from "@/lib/api"
 import { useUser } from "@clerk/clerk-react"
 import { useDemo } from "@/contexts/DemoContext"
+import { notificationService } from "@/services/notificationService"
 
 interface Task {
   id: string
@@ -63,10 +66,17 @@ interface Task {
   category: 'Academic' | 'Personal' | 'Work'
   completed: boolean
   dueDate?: string
+  startTime?: string
+  endTime?: string
   points: number
   roast?: string
   isDaily?: boolean
   completedDates?: string[]
+  calendarEventId?: string
+  reminders?: {
+    before?: number // minutes before start
+    after?: number  // minutes after end
+  }
 }
 
 interface UserStats {
@@ -101,7 +111,13 @@ const Tasks = () => {
     priority: 'Medium' as Task['priority'],
     category: 'Personal' as Task['category'],
     dueDate: '',
-    isDaily: false
+    startTime: '',
+    endTime: '',
+    isDaily: false,
+    reminders: {
+      before: 15, // 15 minutes before
+      after: 0    // no reminder after by default
+    }
   })
 
   const [filterPriority, setFilterPriority] = useState<string>('all')
@@ -115,6 +131,8 @@ const Tasks = () => {
   // Load tasks and stats on component mount
   useEffect(() => {
     loadTasksAndStats()
+    // Request notification permission
+    notificationService.requestPermission()
   }, [])
 
   const loadTasksAndStats = async () => {
@@ -140,16 +158,43 @@ const Tasks = () => {
       return
     }
 
+    // Validate time fields if provided
+    if (newTask.startTime && newTask.endTime) {
+      const start = new Date(`2000-01-01T${newTask.startTime}`)
+      const end = new Date(`2000-01-01T${newTask.endTime}`)
+      if (start >= end) {
+        toast.error("End time must be after start time!")
+        return
+      }
+    }
+
     try {
-      const task = await taskApi.createTask(newTask)
+      const taskData = {
+        ...newTask,
+        addToCalendar: (newTask.startTime && newTask.endTime && newTask.dueDate) // Auto-add to calendar if time fields are filled
+      }
+      
+      const task = await taskApi.createTask(taskData)
       setTasks([task, ...tasks])
+      
+      // Schedule browser notifications if task has time and reminders
+      if (task.startTime && task.reminders && (task.reminders.before > 0 || task.reminders.after > 0)) {
+        notificationService.showTaskNotifications(task);
+      }
+      
       setNewTask({ 
         title: '', 
         description: '', 
         priority: 'Medium', 
         category: 'Personal', 
         dueDate: '',
-        isDaily: false
+        startTime: '',
+        endTime: '',
+        isDaily: false,
+        reminders: {
+          before: 15,
+          after: 0
+        }
       })
       setIsDialogOpen(false)
       
@@ -157,7 +202,15 @@ const Tasks = () => {
       const statsData = await taskApi.getUserStats()
       setUserStats(statsData)
       
-      toast.success("Task added! Now stop making excuses and do it 🔥")
+      let successMessage = "Task added! Now stop making excuses and do it 🔥"
+      if (task.calendarEventId) {
+        successMessage += " | Added to Google Calendar 📅"
+      }
+      if (task.startTime && task.reminders && (task.reminders.before > 0 || task.reminders.after > 0)) {
+        successMessage += " | Reminders scheduled 🔔"
+      }
+      
+      toast.success(successMessage)
     } catch (error) {
       console.error('Error adding task:', error)
       toast.error('Failed to add task. Please try again.')
@@ -210,7 +263,10 @@ const Tasks = () => {
     setEditingTask({
       ...task,
       // Convert Date objects to strings for form inputs
-      dueDate: task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : ''
+      dueDate: task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : '',
+      startTime: task.startTime || '',
+      endTime: task.endTime || '',
+      reminders: task.reminders || { before: 15, after: 0 }
     })
     setIsEditDialogOpen(true)
   }
@@ -346,6 +402,9 @@ const Tasks = () => {
         {/* Demo Restriction Banner */}
         <DemoRestrictionBanner />
         
+        {/* Notification Permission Request */}
+        <NotificationPermission />
+        
         {/* Personalized Welcome Message */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -435,7 +494,7 @@ const Tasks = () => {
           <div className="flex flex-col sm:flex-row gap-3">
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
-                <DemoRestrictedButton className="bg-primary text-primary-foreground shadow-glow hover:bg-primary/90">
+                <DemoRestrictedButton className="bg-primary text-primary-foreground shadow-glow hover:bg-primary/90" allowInDemo={true}>
                   <Plus className="mr-2 h-4 w-4" />
                   Add Task
                 </DemoRestrictedButton>
@@ -487,9 +546,91 @@ const Tasks = () => {
                 
                 <DemoRestrictedInput
                   type="date"
+                  placeholder="Due Date"
                   value={newTask.dueDate}
                   onChange={(e) => setNewTask({...newTask, dueDate: e.target.value})}
                 />
+
+                {/* Time Fields */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                      <Clock className="h-4 w-4" />
+                      Start Time
+                    </label>
+                    <DemoRestrictedInput
+                      type="time"
+                      value={newTask.startTime}
+                      onChange={(e) => setNewTask({...newTask, startTime: e.target.value})}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                      <Clock className="h-4 w-4" />
+                      End Time
+                    </label>
+                    <DemoRestrictedInput
+                      type="time"
+                      value={newTask.endTime}
+                      onChange={(e) => setNewTask({...newTask, endTime: e.target.value})}
+                    />
+                  </div>
+                </div>
+
+                {/* Reminder Settings */}
+                {(newTask.startTime || newTask.endTime) && (
+                  <div className="space-y-3 p-4 border rounded-lg bg-muted/20">
+                    <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                      <Sparkles className="h-4 w-4" />
+                      Notification Reminders
+                    </label>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-xs text-muted-foreground">Before start (minutes)</label>
+                        <Select 
+                          value={newTask.reminders.before.toString()} 
+                          onValueChange={(value) => setNewTask({
+                            ...newTask, 
+                            reminders: {...newTask.reminders, before: parseInt(value)}
+                          })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="0">No reminder</SelectItem>
+                            <SelectItem value="5">5 minutes</SelectItem>
+                            <SelectItem value="15">15 minutes</SelectItem>
+                            <SelectItem value="30">30 minutes</SelectItem>
+                            <SelectItem value="60">1 hour</SelectItem>
+                            <SelectItem value="1440">1 day</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-xs text-muted-foreground">After end (minutes)</label>
+                        <Select 
+                          value={newTask.reminders.after.toString()} 
+                          onValueChange={(value) => setNewTask({
+                            ...newTask, 
+                            reminders: {...newTask.reminders, after: parseInt(value)}
+                          })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="0">No reminder</SelectItem>
+                            <SelectItem value="5">5 minutes</SelectItem>
+                            <SelectItem value="15">15 minutes</SelectItem>
+                            <SelectItem value="30">30 minutes</SelectItem>
+                            <SelectItem value="60">1 hour</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {/* Daily Task Checkbox */}
                 <div className="flex items-center space-x-2">
@@ -503,9 +644,23 @@ const Tasks = () => {
                     Daily recurring task
                   </label>
                 </div>
+
+                {/* Google Calendar Integration */}
+                {(newTask.startTime && newTask.endTime && newTask.dueDate) && (
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="addToCalendar"
+                      defaultChecked={true}
+                    />
+                    <label htmlFor="addToCalendar" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-2">
+                      <Calendar className="h-4 w-4 text-green-600" />
+                      Add to Google Calendar
+                    </label>
+                  </div>
+                )}
                 
                 <div className="flex gap-2">
-                  <DemoRestrictedButton onClick={addTask} className="flex-1">
+                  <DemoRestrictedButton onClick={addTask} className="flex-1" allowInDemo={true}>
                     Add Task
                   </DemoRestrictedButton>
                   <DemoRestrictedButton variant="outline" size="icon">
@@ -687,12 +842,33 @@ const Tasks = () => {
                       )}
                       
                       <div className="flex items-center justify-between">
-                        {task.dueDate && (
-                          <div className="flex items-center text-sm text-muted-foreground">
-                            <Clock className="mr-1 h-3 w-3" />
-                            Due: {new Date(task.dueDate).toLocaleDateString()}
-                          </div>
-                        )}
+                        <div className="flex flex-col gap-1">
+                          {task.dueDate && (
+                            <div className="flex items-center text-sm text-muted-foreground">
+                              <Clock className="mr-1 h-3 w-3" />
+                              Due: {new Date(task.dueDate).toLocaleDateString()}
+                            </div>
+                          )}
+                          
+                          {(task.startTime && task.endTime) && (
+                            <div className="flex items-center text-sm text-green-600">
+                              <Clock className="mr-1 h-3 w-3" />
+                              {task.startTime} - {task.endTime}
+                              {task.calendarEventId && (
+                                <Calendar className="ml-2 h-3 w-3" />
+                              )}
+                            </div>
+                          )}
+                          
+                          {task.reminders && (task.reminders.before > 0 || task.reminders.after > 0) && (
+                            <div className="flex items-center text-sm text-blue-600">
+                              <Bell className="mr-1 h-3 w-3" />
+                              Reminders: 
+                              {task.reminders.before > 0 && ` ${task.reminders.before}min before`}
+                              {task.reminders.after > 0 && ` ${task.reminders.after}min after`}
+                            </div>
+                          )}
+                        </div>
                         
                         <div className="flex gap-1">
                           <DemoRestrictedButton
@@ -814,11 +990,98 @@ const Tasks = () => {
                 </label>
                 <Input
                   id="edit-dueDate"
-                  type="datetime-local"
-                  value={editingTask.dueDate ? new Date(editingTask.dueDate).toISOString().slice(0, 16) : ''}
-                  onChange={(e) => setEditingTask({...editingTask, dueDate: e.target.value ? new Date(e.target.value).toISOString() : undefined})}
+                  type="date"
+                  value={editingTask.dueDate || ''}
+                  onChange={(e) => setEditingTask({...editingTask, dueDate: e.target.value})}
                 />
               </div>
+              
+              {/* Time Fields */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <label htmlFor="edit-startTime" className="text-sm font-medium">
+                    Start Time
+                  </label>
+                  <Input
+                    id="edit-startTime"
+                    type="time"
+                    value={editingTask.startTime || ''}
+                    onChange={(e) => setEditingTask({...editingTask, startTime: e.target.value})}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <label htmlFor="edit-endTime" className="text-sm font-medium">
+                    End Time
+                  </label>
+                  <Input
+                    id="edit-endTime"
+                    type="time"
+                    value={editingTask.endTime || ''}
+                    onChange={(e) => setEditingTask({...editingTask, endTime: e.target.value})}
+                  />
+                </div>
+              </div>
+              
+              {/* Reminder Settings */}
+              {(editingTask.startTime || editingTask.endTime) && (
+                <div className="space-y-3 p-3 border rounded-lg bg-muted/20">
+                  <label className="text-sm font-medium text-muted-foreground">
+                    Notification Reminders
+                  </label>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-xs text-muted-foreground">Before start (minutes)</label>
+                      <Select 
+                        value={editingTask.reminders?.before?.toString() || '15'} 
+                        onValueChange={(value) => setEditingTask({
+                          ...editingTask, 
+                          reminders: {
+                            before: parseInt(value),
+                            after: editingTask.reminders?.after || 0
+                          }
+                        })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="0">No reminder</SelectItem>
+                          <SelectItem value="5">5 minutes</SelectItem>
+                          <SelectItem value="15">15 minutes</SelectItem>
+                          <SelectItem value="30">30 minutes</SelectItem>
+                          <SelectItem value="60">1 hour</SelectItem>
+                          <SelectItem value="1440">1 day</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-xs text-muted-foreground">After end (minutes)</label>
+                      <Select 
+                        value={editingTask.reminders?.after?.toString() || '0'} 
+                        onValueChange={(value) => setEditingTask({
+                          ...editingTask, 
+                          reminders: {
+                            before: editingTask.reminders?.before || 15, 
+                            after: parseInt(value)
+                          }
+                        })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="0">No reminder</SelectItem>
+                          <SelectItem value="5">5 minutes</SelectItem>
+                          <SelectItem value="15">15 minutes</SelectItem>
+                          <SelectItem value="30">30 minutes</SelectItem>
+                          <SelectItem value="60">1 hour</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="edit-isDaily"
