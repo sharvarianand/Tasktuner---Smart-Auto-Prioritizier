@@ -25,6 +25,7 @@ import AuthButton from "@/components/AuthButton"
 import RoastGenerator from "@/components/RoastGenerator"
 import Logo3D from "@/components/Logo3D"
 import HeroBackground3D from "@/components/HeroBackground3D"
+import LiveBackground from "@/components/LiveBackground"
 import { useDemoMode } from "@/contexts/DemoContext"
 
 const Index = () => {
@@ -90,9 +91,12 @@ const Index = () => {
   ]
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen relative">
+      {/* Live Background */}
+      <LiveBackground />
+      
       {/* Navigation */}
-      <nav className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
+      <nav className="sticky top-0 z-50 backdrop-blur-md border-b border-primary/20" style={{ backgroundColor: 'hsla(25, 95%, 53%, 0.1)' }}>
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <Logo3D 
             size="md" 
@@ -122,9 +126,6 @@ const Index = () => {
 
       {/* Hero Section */}
       <section className="relative overflow-hidden py-20 px-4 min-h-screen flex items-center">
-        <HeroBackground3D />
-        <div className="absolute inset-0 bg-gradient-to-br from-background/90 via-background/50 to-background/90" />
-        
         <div className="container mx-auto text-center relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -244,7 +245,7 @@ const Index = () => {
       </section>
 
       {/* Features Section */}
-      <section id="features" className="py-20 px-4 bg-muted/30">
+      <section id="features" className="py-20 px-4 bg-card/20 backdrop-blur-sm relative z-10">
         <div className="container mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -309,7 +310,7 @@ const Index = () => {
       </section>
 
       {/* Roast Generator Section */}
-      <section id="roast" className="py-20 px-4 bg-background">
+      <section id="roast" className="py-20 px-4 bg-background/20 backdrop-blur-sm relative z-10">
         <div className="container mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -330,7 +331,7 @@ const Index = () => {
       </section>
 
       {/* Testimonials Section */}
-      <section id="testimonials" className="py-20 px-4">
+      <section id="testimonials" className="py-20 px-4 relative z-10">
         <div className="container mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -376,8 +377,7 @@ const Index = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 px-4 bg-primary relative overflow-hidden">
-        <div className="absolute inset-0 bg-black/10" />
+      <section className="py-20 px-4 bg-primary/90 backdrop-blur-sm relative overflow-hidden z-10">
         <div className="container mx-auto text-center relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 20 }}

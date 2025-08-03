@@ -22,6 +22,9 @@ import {
 import { useNavigate } from "react-router-dom";
 import { useDemoMode } from "@/contexts/DemoContext";
 import { DemoRestrictionBanner, DemoRestrictedButton } from "@/components/demo-restriction";
+import { useTheme } from "@/components/theme-provider";
+import LiveBackground from "@/components/LiveBackground";
+import { toast } from "sonner";
 
 const backgroundSounds = {
   lofi: {
@@ -63,6 +66,7 @@ const mockUser = {
 const Focus = () => {
   const navigate = useNavigate();
   const { isDemoMode } = useDemoMode();
+  const { theme } = useTheme();
   const [selectedTask, setSelectedTask] = useState(null);
   const [tasks, setTasks] = useState(mockTasks);
   const [duration, setDuration] = useState([25]); // Pomodoro default
@@ -128,6 +132,11 @@ const Focus = () => {
   }, [focusLocked]);
 
   const startSession = async () => {
+    if (isDemoMode) {
+      toast.info("Focus sessions are not available in demo mode. Sign up to start focusing!");
+      return;
+    }
+
     if (!selectedTask) {
       alert("Please select a task to focus on!");
       return;
@@ -149,10 +158,19 @@ const Focus = () => {
   };
 
   const pauseSession = () => {
+    if (isDemoMode) {
+      toast.info("Session controls are not available in demo mode. Sign up to manage your focus sessions!");
+      return;
+    }
     setIsPaused(!isPaused);
   };
 
   const stopSession = async () => {
+    if (isDemoMode) {
+      toast.info("Session controls are not available in demo mode. Sign up to manage your focus sessions!");
+      return;
+    }
+    
     if (focusLocked && !window.confirm("Are you sure you want to break your focus lock and end this session?")) {
       return;
     }
@@ -178,6 +196,11 @@ const Focus = () => {
   };
 
   const toggleFocusLock = () => {
+    if (isDemoMode) {
+      toast.info("Focus Lock is not available in demo mode. Sign up to use advanced focus features!");
+      return;
+    }
+    
     if (!focusLocked) {
       if (window.confirm("Focus Lock will prevent you from leaving this page until your session ends. Continue?")) {
         setFocusLocked(true);
@@ -187,6 +210,22 @@ const Focus = () => {
         setFocusLocked(false);
       }
     }
+  };
+
+  const handleMusicToggle = () => {
+    if (isDemoMode) {
+      toast.info("Music controls are not available in demo mode. Sign up to customize your focus experience!");
+      return;
+    }
+    setMusicEnabled(!musicEnabled);
+  };
+
+  const handleBackgroundMusicChange = (key: string) => {
+    if (isDemoMode) {
+      toast.info("Music selection is not available in demo mode. Sign up to customize your focus soundtrack!");
+      return;
+    }
+    setBackgroundMusic(key);
   };
 
   const handleNavigation = () => {
@@ -206,7 +245,10 @@ const Focus = () => {
   const progress = ((duration[0] * 60 - timeRemaining) / (duration[0] * 60)) * 100;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-orange-900 dark:from-slate-950 dark:via-blue-950 dark:to-orange-950">
+    <div className="min-h-screen relative">
+      {/* Live Background */}
+      <LiveBackground />
+      
       {/* Demo Banner */}
       {isDemoMode && <DemoRestrictionBanner />}
       
@@ -229,7 +271,7 @@ const Focus = () => {
         />
       )}
 
-      <div className={`p-4 md:p-6 lg:p-8 ${focusLocked ? 'pt-12' : ''}`}>
+      <div className={`p-4 md:p-6 lg:p-8 relative z-10 ${focusLocked ? 'pt-12' : ''}`}>
         <div className="w-full max-w-full mx-auto">
           {/* Header */}
           <div className="flex items-center justify-between mb-6 lg:mb-8">
@@ -238,13 +280,21 @@ const Focus = () => {
                 variant="ghost"
                 size="icon"
                 onClick={handleNavigation}
-                className="text-white hover:bg-white/10"
+                className={`${
+                  theme === 'dark' 
+                    ? 'text-white hover:bg-white/10' 
+                    : 'text-slate-800 hover:bg-black/10'
+                }`}
               >
                 <ArrowLeft className="w-5 h-5" />
               </Button>
               <div>
-                <h1 className="text-2xl lg:text-3xl font-bold text-white">Focus Mode</h1>
-                <p className="text-orange-200 text-sm lg:text-base">
+                <h1 className={`text-2xl lg:text-3xl font-bold ${
+                  theme === 'dark' ? 'text-white' : 'text-slate-800'
+                }`}>Focus Mode</h1>
+                <p className={`text-sm lg:text-base ${
+                  theme === 'dark' ? 'text-purple-200' : 'text-slate-600'
+                }`}>
                   {user?.full_name?.split(' ')[0]}, time to get in the zone and get roasted by productivity!
                 </p>
               </div>
@@ -253,7 +303,11 @@ const Focus = () => {
               variant="ghost"
               size="icon"
               onClick={toggleFocusLock}
-              className={`text-white hover:bg-white/10 ${focusLocked ? 'bg-orange-600/50' : ''}`}
+              className={`${
+                theme === 'dark' 
+                  ? 'text-white hover:bg-white/10' 
+                  : 'text-slate-800 hover:bg-black/10'
+              } ${focusLocked ? 'bg-orange-600/50' : ''}`}
               aria-label={focusLocked ? "Focus Lock Active - Click to disable" : "Enable Focus Lock"}
             >
               {focusLocked ? <Lock className="w-5 h-5 text-orange-300" /> : <Unlock className="w-5 h-5" />}
@@ -263,7 +317,11 @@ const Focus = () => {
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 lg:gap-6">
             <div className="lg:col-span-3">
               {/* Main Timer */}
-              <Card className="bg-white/10 backdrop-blur-md border-white/20 text-white shadow-glow h-full">
+              <Card className={`${
+                theme === 'dark' 
+                  ? 'bg-white/10 backdrop-blur-md border-white/20 text-white' 
+                  : 'bg-black/5 backdrop-blur-md border-black/10 text-slate-800'
+              } shadow-glow h-full`}>
                 <CardHeader>
                   <CardTitle className="text-center text-orange-100 text-lg lg:text-xl">
                     {selectedTask ? selectedTask.title : "Select a task to begin your focus journey"}
@@ -323,10 +381,18 @@ const Focus = () => {
 
             <div className="lg:col-span-2 space-y-4 lg:space-y-6">
               {/* Task Selection */}
-              <Card className="bg-white/10 backdrop-blur-md border-white/20 text-white">
+              <Card className={`${
+                theme === 'dark' 
+                  ? 'bg-white/10 backdrop-blur-md border-white/20 text-white' 
+                  : 'bg-black/5 backdrop-blur-md border-black/10 text-slate-800'
+              }`}>
                 <CardHeader className="pb-3">
-                  <CardTitle className="flex items-center gap-2 text-orange-100 text-lg">
-                    <Target className="w-5 h-5 text-orange-400" />
+                  <CardTitle className={`flex items-center gap-2 text-lg ${
+                    theme === 'dark' ? 'text-orange-100' : 'text-slate-700'
+                  }`}>
+                    <Target className={`w-5 h-5 ${
+                      theme === 'dark' ? 'text-orange-400' : 'text-blue-500'
+                    }`} />
                     Select Task to Conquer
                   </CardTitle>
                 </CardHeader>
@@ -339,12 +405,20 @@ const Focus = () => {
                     }}
                     disabled={isActive || isDemoMode}
                   >
-                    <SelectTrigger className="bg-white/20 border-white/30 text-white hover:bg-white/30 h-12">
+                    <SelectTrigger className={`h-12 ${
+                      theme === 'dark' 
+                        ? 'bg-white/20 border-white/30 text-white hover:bg-white/30' 
+                        : 'bg-black/5 border-black/20 text-slate-800 hover:bg-black/10'
+                    }`}>
                       <SelectValue placeholder="Choose your next challenge" />
                     </SelectTrigger>
-                    <SelectContent className="bg-slate-800 border-slate-600">
+                    <SelectContent className={`${
+                      theme === 'dark' ? 'bg-slate-800 border-slate-600' : 'bg-white border-slate-200'
+                    }`}>
                       {tasks.map(task => (
-                        <SelectItem key={task.id} value={task.id} className="text-white hover:bg-slate-700">
+                        <SelectItem key={task.id} value={task.id} className={`${
+                          theme === 'dark' ? 'text-white hover:bg-slate-700' : 'text-slate-800 hover:bg-slate-100'
+                        }`}>
                           <div className="flex items-center gap-2 w-full">
                             <span className="flex-1">{task.title}</span>
                             <Badge 
@@ -373,10 +447,18 @@ const Focus = () => {
               </Card>
 
               {/* Duration Setting */}
-              <Card className="bg-white/10 backdrop-blur-md border-white/20 text-white">
+              <Card className={`${
+                theme === 'dark' 
+                  ? 'bg-white/10 backdrop-blur-md border-white/20 text-white' 
+                  : 'bg-black/5 backdrop-blur-md border-black/10 text-slate-800'
+              }`}>
                 <CardHeader className="pb-3">
-                  <CardTitle className="flex items-center gap-2 text-orange-100 text-lg">
-                    <Timer className="w-5 h-5 text-orange-400" />
+                  <CardTitle className={`flex items-center gap-2 text-lg ${
+                    theme === 'dark' ? 'text-orange-100' : 'text-slate-700'
+                  }`}>
+                    <Timer className={`w-5 h-5 ${
+                      theme === 'dark' ? 'text-orange-400' : 'text-blue-500'
+                    }`} />
                     Focus Duration
                   </CardTitle>
                 </CardHeader>
@@ -394,12 +476,18 @@ const Focus = () => {
                     disabled={isActive || isDemoMode}
                     className="w-full [&_[role=slider]]:bg-orange-500 [&_[role=slider]]:border-orange-400"
                   />
-                  <div className="flex justify-between text-sm text-white/70">
+                  <div className={`flex justify-between text-sm ${
+                    theme === 'dark' ? 'text-white/70' : 'text-slate-600'
+                  }`}>
                     <span>5m</span>
-                    <span className="text-orange-300 font-semibold">25m (Pomodoro)</span>
+                    <span className={`font-semibold ${
+                      theme === 'dark' ? 'text-orange-300' : 'text-blue-600'
+                    }`}>25m (Pomodoro)</span>
                     <span>120m</span>
                   </div>
-                  <div className="text-xs text-center text-orange-200/80">
+                  <div className={`text-xs text-center ${
+                    theme === 'dark' ? 'text-orange-200/80' : 'text-slate-500'
+                  }`}>
                     {duration[0] === 25 ? "Classic Pomodoro - Perfect for maximum focus!" :
                      duration[0] < 25 ? "Quick burst - Great for small tasks!" :
                      "Deep work - Time to tackle complex challenges!"}
@@ -408,20 +496,39 @@ const Focus = () => {
               </Card>
 
               {/* Music Settings */}
-              <Card className="bg-white/10 backdrop-blur-md border-white/20 text-white">
+              <Card className={`${
+                theme === 'dark' 
+                  ? 'bg-white/10 backdrop-blur-md border-white/20 text-white' 
+                  : 'bg-black/5 backdrop-blur-md border-black/10 text-slate-800'
+              }`}>
                 <CardHeader className="pb-3">
-                  <CardTitle className="flex items-center justify-between text-orange-100 text-lg">
+                  <CardTitle className={`flex items-center justify-between text-lg ${
+                    theme === 'dark' ? 'text-orange-100' : 'text-slate-700'
+                  }`}>
                     <div className="flex items-center gap-2">
-                      <Music className="w-5 h-5 text-orange-400" />
+                      <Music className={`w-5 h-5 ${
+                        theme === 'dark' ? 'text-orange-400' : 'text-blue-500'
+                      }`} />
                       Focus Soundtrack
                     </div>
                     <DemoRestrictedButton
                       variant="ghost"
                       size="icon"
-                      onClick={() => setMusicEnabled(!musicEnabled)}
-                      className="text-white hover:bg-white/10 h-8 w-8"
+                      onClick={handleMusicToggle}
+                      className={`h-8 w-8 ${
+                        theme === 'dark' 
+                          ? 'text-white hover:bg-white/10' 
+                          : 'text-slate-800 hover:bg-black/10'
+                      }`}
                     >
-                      {musicEnabled ? <Volume2 className="w-4 h-4 text-orange-400" /> : <VolumeX className="w-4 h-4 text-gray-400" />}
+                      {musicEnabled ? 
+                        <Volume2 className={`w-4 h-4 ${
+                          theme === 'dark' ? 'text-orange-400' : 'text-blue-500'
+                        }`} /> : 
+                        <VolumeX className={`w-4 h-4 ${
+                          theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                        }`} />
+                      }
                     </DemoRestrictedButton>
                   </CardTitle>
                 </CardHeader>
@@ -431,12 +538,18 @@ const Focus = () => {
                       <DemoRestrictedButton
                         key={key}
                         variant={backgroundMusic === key ? "default" : "ghost"}
-                        onClick={() => setBackgroundMusic(key)}
+                        onClick={() => handleBackgroundMusicChange(key)}
                         disabled={isActive}
                         className={`w-full justify-start p-3 h-auto ${
                           backgroundMusic === key 
-                            ? `bg-gradient-to-r ${sound.color} text-white shadow-md border border-white/20` 
-                            : 'text-white hover:bg-white/10 border border-white/10'
+                            ? `bg-gradient-to-r ${sound.color} text-white shadow-md border ${
+                              theme === 'dark' ? 'border-white/20' : 'border-black/20'
+                            }` 
+                            : `${
+                              theme === 'dark' 
+                                ? 'text-white hover:bg-white/10 border border-white/10' 
+                                : 'text-slate-800 hover:bg-black/10 border border-black/10'
+                            }`
                         }`}
                       >
                         <div className="flex items-center gap-3">
@@ -453,20 +566,37 @@ const Focus = () => {
               </Card>
 
               {/* Focus Lock Settings */}
-              <Card className="bg-white/10 backdrop-blur-md border-white/20 text-white">
+              <Card className={`${
+                theme === 'dark' 
+                  ? 'bg-white/10 backdrop-blur-md border-white/20 text-white' 
+                  : 'bg-black/5 backdrop-blur-md border-black/10 text-slate-800'
+              }`}>
                 <CardHeader className="pb-3">
-                  <CardTitle className="flex items-center gap-2 text-orange-100 text-lg">
-                    {focusLocked ? <Shield className="w-5 h-5 text-orange-400" /> : <ShieldOff className="w-5 h-5 text-gray-400" />}
+                  <CardTitle className={`flex items-center gap-2 text-lg ${
+                    theme === 'dark' ? 'text-orange-100' : 'text-slate-700'
+                  }`}>
+                    {focusLocked ? 
+                      <Shield className={`w-5 h-5 ${
+                        theme === 'dark' ? 'text-orange-400' : 'text-blue-500'
+                      }`} /> : 
+                      <ShieldOff className={`w-5 h-5 ${
+                        theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                      }`} />
+                    }
                     Focus Lock
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-white">
+                      <p className={`text-sm font-medium ${
+                        theme === 'dark' ? 'text-white' : 'text-slate-800'
+                      }`}>
                         {focusLocked ? "Lock Active" : "Lock Disabled"}
                       </p>
-                      <p className="text-xs text-gray-300">
+                      <p className={`text-xs ${
+                        theme === 'dark' ? 'text-gray-300' : 'text-slate-600'
+                      }`}>
                         {focusLocked 
                           ? "Cannot leave page until session ends"
                           : "Free navigation available"

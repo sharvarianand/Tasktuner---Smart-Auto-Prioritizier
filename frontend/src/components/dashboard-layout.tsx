@@ -29,7 +29,7 @@ export function DashboardLayout({ children, title }: DashboardLayoutProps) {
       
       <div className="flex-1 flex flex-col relative z-10">
         {/* Top Navigation */}
-        <header className="h-16 border-b border-border bg-card/95 backdrop-blur-sm flex items-center justify-between px-6 sticky top-0 z-20">
+        <header className="h-16 border-b border-primary/20 backdrop-blur-md flex items-center justify-between px-6 sticky top-0 z-20" style={{ backgroundColor: 'hsla(25, 95%, 53%, 0.1)' }}>
           <div className="flex items-center space-x-4">
             <SidebarTrigger className="text-foreground hover:text-primary relative z-30" />
             {title && (
