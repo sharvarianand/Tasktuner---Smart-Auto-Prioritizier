@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { useUser } from "@clerk/clerk-react"
+import { useAuth } from "@clerk/clerk-react"
 import { 
   Zap, 
   Calendar, 
@@ -21,6 +22,7 @@ import {
   ChevronDown
 } from "lucide-react"
 import { useNavigate } from "react-router-dom"
+import { useEffect } from "react"
 import { ThemeToggle } from "@/components/theme-toggle"
 import AuthButton from "@/components/AuthButton"
 import RoastGenerator from "@/components/RoastGenerator"
@@ -32,7 +34,39 @@ import { useDemoMode } from "@/contexts/DemoContext"
 const Index = () => {
   const navigate = useNavigate()
   const { isSignedIn } = useUser()
+  const { isLoaded } = useAuth()
   const { setDemoMode } = useDemoMode()
+
+  // Redirect authenticated users to dashboard
+  useEffect(() => {
+    if (isLoaded && isSignedIn) {
+      console.log('Authenticated user detected on landing page, redirecting to dashboard')
+      navigate('/dashboard', { replace: true })
+    }
+  }, [isLoaded, isSignedIn, navigate])
+
+  // Don't render landing page content if user is signed in or still loading auth
+  if (!isLoaded) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (isSignedIn) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Redirecting to dashboard...</p>
+        </div>
+      </div>
+    )
+  }
 
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId)
@@ -49,7 +83,7 @@ const Index = () => {
   const handleLogoAction = (action: string) => {
     switch (action) {
       case 'roast':
-        navigate('/roast')
+        scrollToSection('roast')
         break
       case 'tasks':
         navigate('/tasks')
@@ -60,6 +94,9 @@ const Index = () => {
       case 'analytics':
         navigate('/analytics')
         break
+      case 'calendar':
+        navigate('/calendar')
+        break
       default:
         break
     }
@@ -69,27 +106,32 @@ const Index = () => {
     {
       icon: Brain,
       title: "AI Roast Generator",
-      description: "Get brutally honest feedback on your procrastination habits"
+      description: "Get brutally honest feedback on your procrastination habits",
+      action: "roast"
     },
     {
       icon: Calendar,
       title: "Smart Scheduling",
-      description: "Auto-sync with Google Calendar and optimize your time blocks"
+      description: "Auto-sync with Google Calendar and optimize your time blocks",
+      action: "calendar"
     },
     {
       icon: Target,
       title: "Goal Breakdown",
-      description: "Turn massive goals into bite-sized, achievable tasks"
+      description: "Turn massive goals into bite-sized, achievable tasks",
+      action: "tasks"
     },
     {
       icon: Clock,
       title: "Focus Mode",
-      description: "Pomodoro timer with AI-powered break suggestions and distraction blocking"
+      description: "Pomodoro timer with AI-powered break suggestions and distraction blocking",
+      action: "focus"
     },
     {
       icon: Trophy,
       title: "Gamified Progress",
-      description: "Earn XP, build streaks, and compete with friends"
+      description: "Earn XP, build streaks, and compete with friends",
+      action: "analytics"
     }
   ]
 
@@ -147,9 +189,9 @@ const Index = () => {
       </nav>
 
       {/* Hero Section */}
-      <section className="relative overflow-hidden py-20 px-4 min-h-screen flex items-center z-10">
+      <section className="relative overflow-hidden pb-20 px-4 min-h-screen flex items-start justify-center z-10">
         
-        <div className="container mx-auto text-center relative z-10">
+        <div className="container mx-auto text-center relative z-10 mt-4">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -301,7 +343,8 @@ const Index = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: index * 0.1 }}
                 whileHover={{ scale: 1.02, y: -5 }}
-                className="group"
+                className="group cursor-pointer"
+                onClick={() => handleLogoAction(feature.action)}
               >
                 <Card className="h-full bg-card/80 backdrop-blur-sm border-border hover:border-primary/50 transition-all duration-500 hover:shadow-2xl hover:shadow-primary/20 group-hover:glow">
                   <CardHeader>
@@ -326,7 +369,8 @@ const Index = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: (index + 3) * 0.1 }}
                 whileHover={{ scale: 1.02, y: -5 }}
-                className="group"
+                className="group cursor-pointer"
+                onClick={() => handleLogoAction(feature.action)}
               >
                 <Card className="h-full bg-card/80 backdrop-blur-sm border-border hover:border-primary/50 transition-all duration-500 hover:shadow-2xl hover:shadow-primary/20 group-hover:glow">
                   <CardHeader>

@@ -19,7 +19,7 @@ import {
   Shield,
   ShieldOff
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useDemoMode } from "@/contexts/DemoContext";
 import { DemoRestrictionBanner, DemoRestrictedButton } from "@/components/demo-restriction";
 import { useTheme } from "@/components/theme-provider";
@@ -65,6 +65,7 @@ const mockUser = {
 
 const Focus = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { isDemoMode } = useDemoMode();
   const { theme } = useTheme();
   const [selectedTask, setSelectedTask] = useState(null);
@@ -237,7 +238,7 @@ const Focus = () => {
       setIsActive(false);
       setCurrentSession(null);
     }
-    // Preserve demo mode when navigating back to dashboard
+    // Always go to dashboard for authenticated users (landing page redirects them anyway)
     const url = isDemoMode ? "/dashboard?demo=true" : "/dashboard";
     navigate(url);
   };

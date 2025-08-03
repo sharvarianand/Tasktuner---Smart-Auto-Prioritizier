@@ -9,9 +9,17 @@ interface ProtectedRouteProps {
 
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const { isSignedIn, isLoaded } = useAuth();
-  const { isDemo } = useDemo();
+  const { isDemo, setDemoMode } = useDemo();
   const [searchParams] = useSearchParams();
   const [isInitialized, setIsInitialized] = useState(false);
+
+  // Clear demo mode if user is authenticated
+  useEffect(() => {
+    if (isLoaded && isSignedIn && isDemo) {
+      console.log('Authenticated user detected, clearing demo mode in ProtectedRoute')
+      setDemoMode(false)
+    }
+  }, [isLoaded, isSignedIn, isDemo, setDemoMode])
 
   // Give demo context time to initialize from URL params
   useEffect(() => {
