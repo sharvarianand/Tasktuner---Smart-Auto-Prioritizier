@@ -51,33 +51,34 @@ const LiveBackground: React.FC = () => {
 
   const currentColors = colorSchemes[theme === 'dark' ? 'dark' : 'light']
 
-  // Initialize particles
+  // Initialize particles - optimized for faster creation
   const createParticle = (x?: number, y?: number): Particle => {
-    const types: Particle['type'][] = ['circle', 'square', 'triangle', 'star']
-    const baseOpacity = theme === 'dark' ? 0.8 : 0.4
+    const types: Particle['type'][] = ['circle', 'circle', 'square', 'triangle'] // More circles for better performance
+    const baseOpacity = theme === 'dark' ? 0.6 : 0.3 // Reduced opacity for better performance
+    const randomType = Math.floor(Math.random() * 4)
     return {
       x: x ?? Math.random() * dimensions.width,
       y: y ?? Math.random() * dimensions.height,
-      vx: (Math.random() - 0.5) * 2,
-      vy: (Math.random() - 0.5) * 2,
-      size: Math.random() * 4 + 1,
+      vx: (Math.random() - 0.5) * 1.5, // Reduced velocity for smoother animation
+      vy: (Math.random() - 0.5) * 1.5,
+      size: Math.random() * 3 + 1, // Smaller particles for better performance
       color: currentColors.particles[Math.floor(Math.random() * currentColors.particles.length)],
-      opacity: Math.random() * baseOpacity + 0.2,
+      opacity: Math.random() * baseOpacity + 0.15,
       life: 0,
-      maxLife: Math.random() * 300 + 200,
-      type: types[Math.floor(Math.random() * types.length)]
+      maxLife: Math.random() * 200 + 150, // Shorter lifespan
+      type: types[randomType]
     }
   }
 
-  // Initialize waves
+  // Initialize waves - optimized
   const createWaves = () => {
-    return Array.from({ length: 5 }, (_, i) => ({
-      amplitude: Math.random() * 100 + 60,
-      frequency: (Math.random() * 0.008 + 0.003) * (i + 1),
+    return Array.from({ length: 4 }, (_, i) => ({ // Reduced from 5 to 4 waves
+      amplitude: Math.random() * 80 + 50, // Slightly smaller amplitude
+      frequency: (Math.random() * 0.006 + 0.002) * (i + 1), // Optimized frequency
       phase: Math.random() * Math.PI * 2,
-      speed: Math.random() * 0.02 + 0.01,
+      speed: Math.random() * 0.015 + 0.008, // Slightly reduced speed
       color: currentColors.waves[i % currentColors.waves.length],
-      opacity: Math.random() * 0.4 + 0.3
+      opacity: Math.random() * 0.35 + 0.25 // Slightly reduced opacity
     }))
   }
 
@@ -129,19 +130,20 @@ const LiveBackground: React.FC = () => {
     ctx.restore()
   }
 
-  // Draw flowing waves
+  // Draw flowing waves - optimized
   const drawWaves = (ctx: CanvasRenderingContext2D) => {
     wavesRef.current.forEach((wave, index) => {
       ctx.save()
       ctx.globalAlpha = wave.opacity
       ctx.strokeStyle = wave.color
-      ctx.lineWidth = 4
+      ctx.lineWidth = 3 // Reduced from 4 to 3
       ctx.beginPath()
       
-      for (let x = 0; x <= dimensions.width; x += 5) {
+      // Optimized step size for better performance
+      for (let x = 0; x <= dimensions.width; x += 8) { // Increased step from 5 to 8
         const y = dimensions.height / 2 + 
           Math.sin(x * wave.frequency + timeRef.current * wave.speed + wave.phase) * wave.amplitude +
-          Math.sin(x * wave.frequency * 0.5 + timeRef.current * wave.speed * 1.5) * wave.amplitude * 0.3
+          Math.sin(x * wave.frequency * 0.5 + timeRef.current * wave.speed * 1.2) * wave.amplitude * 0.25 // Reduced multiplier
         
         if (x === 0) ctx.moveTo(x, y)
         else ctx.lineTo(x, y)
@@ -150,32 +152,35 @@ const LiveBackground: React.FC = () => {
       ctx.stroke()
       ctx.restore()
       
-      // Update wave properties for dynamic effect
-      wave.phase += wave.speed * 0.5
-      wave.amplitude += Math.sin(timeRef.current * 0.01 + index) * 0.1
+      // Update wave properties for dynamic effect - optimized
+      wave.phase += wave.speed * 0.4 // Reduced from 0.5
+      wave.amplitude += Math.sin(timeRef.current * 0.008 + index) * 0.08 // Reduced fluctuation
     })
   }
 
-  // Draw neural network connections
+  // Draw neural network connections - optimized
   const drawConnections = (ctx: CanvasRenderingContext2D) => {
     const particles = particlesRef.current
+    const maxConnections = 50 // Limit connections for better performance
+    let connectionCount = 0
     ctx.save()
     
-    for (let i = 0; i < particles.length; i++) {
-      for (let j = i + 1; j < particles.length; j++) {
+    for (let i = 0; i < particles.length && connectionCount < maxConnections; i++) {
+      for (let j = i + 1; j < particles.length && connectionCount < maxConnections; j++) {
         const dx = particles[j].x - particles[i].x
         const dy = particles[j].y - particles[i].y
         const distance = Math.sqrt(dx * dx + dy * dy)
         
-        if (distance < 150) {
-          const opacity = (150 - distance) / 150 * 0.3
+        if (distance < 120) { // Reduced from 150 to 120
+          const opacity = (120 - distance) / 120 * 0.25 // Reduced opacity
           ctx.globalAlpha = opacity
           ctx.strokeStyle = currentColors.particles[0]
-          ctx.lineWidth = 1
+          ctx.lineWidth = 0.8 // Reduced from 1
           ctx.beginPath()
           ctx.moveTo(particles[i].x, particles[i].y)
           ctx.lineTo(particles[j].x, particles[j].y)
           ctx.stroke()
+          connectionCount++
         }
       }
     }
@@ -256,8 +261,8 @@ const LiveBackground: React.FC = () => {
       return particle.life < particle.maxLife && particle.opacity > 0.01
     })
 
-    // Add new particles
-    while (particlesRef.current.length < 100) {
+    // Add new particles - optimized count
+    while (particlesRef.current.length < 75) { // Reduced from 100 to 75
       particlesRef.current.push(createParticle())
     }
 
@@ -279,8 +284,8 @@ const LiveBackground: React.FC = () => {
         y: e.clientY - rect.top
       }
       
-      // Create particles at mouse position occasionally
-      if (Math.random() < 0.1) {
+      // Create particles at mouse position occasionally - reduced frequency
+      if (Math.random() < 0.05) { // Reduced from 0.1 to 0.05
         particlesRef.current.push(createParticle(mouseRef.current.x, mouseRef.current.y))
       }
     }
@@ -293,14 +298,14 @@ const LiveBackground: React.FC = () => {
       const x = e.clientX - rect.left
       const y = e.clientY - rect.top
       
-      // Create burst of particles
-      for (let i = 0; i < 20; i++) {
-        const angle = (Math.PI * 2 * i) / 20
-        const speed = Math.random() * 5 + 3
+      // Create burst of particles - optimized count
+      for (let i = 0; i < 12; i++) { // Reduced from 20 to 12
+        const angle = (Math.PI * 2 * i) / 12
+        const speed = Math.random() * 4 + 2 // Slightly reduced speed
         const particle = createParticle(x, y)
         particle.vx = Math.cos(angle) * speed
         particle.vy = Math.sin(angle) * speed
-        particle.size *= 1.5
+        particle.size *= 1.3 // Reduced from 1.5
         particlesRef.current.push(particle)
       }
     }
@@ -329,8 +334,8 @@ const LiveBackground: React.FC = () => {
 
   useEffect(() => {
     if (dimensions.width && dimensions.height) {
-      // Initialize particles and waves
-      particlesRef.current = Array.from({ length: 50 }, () => createParticle())
+      // Initialize particles and waves - optimized initial count
+      particlesRef.current = Array.from({ length: 30 }, () => createParticle()) // Reduced from 50
       wavesRef.current = createWaves()
       
       // Start animation
@@ -352,11 +357,11 @@ const LiveBackground: React.FC = () => {
       className="fixed inset-0 z-0 pointer-events-none"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      transition={{ duration: 2 }}
+      transition={{ duration: 1 }} // Reduced from 2 seconds to 1 second
       style={{
         background: theme === 'dark' 
-          ? 'radial-gradient(ellipse at center, rgba(15, 23, 42, 0.8) 0%, rgba(2, 6, 23, 0.9) 100%)'
-          : 'radial-gradient(ellipse at center, rgba(248, 250, 252, 0.3) 0%, rgba(241, 245, 249, 0.5) 100%)'
+          ? 'radial-gradient(ellipse at center, rgba(15, 23, 42, 0.6) 0%, rgba(2, 6, 23, 0.8) 100%)' // Reduced opacity
+          : 'radial-gradient(ellipse at center, rgba(248, 250, 252, 0.2) 0%, rgba(241, 245, 249, 0.4) 100%)' // Reduced opacity
       }}
     />
   )

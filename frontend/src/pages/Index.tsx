@@ -113,7 +113,7 @@ const Index = () => {
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <Logo3D 
             size="md" 
-            variant="primary" 
+            variant="navbar" 
             animated={true} 
             showText={true}
           />

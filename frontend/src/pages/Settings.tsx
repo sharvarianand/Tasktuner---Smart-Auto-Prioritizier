@@ -42,8 +42,7 @@ import {
   Camera,
   Flame,
   Moon,
-  Sun,
-  Monitor
+  Sun
 } from "lucide-react"
 import { useTheme } from "@/components/theme-provider"
 import { toast } from "sonner"
@@ -269,31 +268,28 @@ const Settings = () => {
                     <p className="text-sm text-muted-foreground mb-3">
                       Choose your preferred color scheme
                     </p>
-                    <div className="flex gap-2">
+                    <div className="flex items-center gap-3">
                       <Button
-                        variant={theme === "light" ? "default" : "outline"}
+                        variant="outline"
                         size="sm"
-                        onClick={() => setTheme("light")}
+                        onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                        className="flex items-center gap-2 hover:bg-primary/10 transition-colors"
                       >
-                        <Sun className="mr-2 h-4 w-4" />
-                        Light
+                        {theme === 'dark' ? (
+                          <>
+                            <Moon className="h-4 w-4 text-blue-400" />
+                            Dark Mode
+                          </>
+                        ) : (
+                          <>
+                            <Sun className="h-4 w-4 text-orange-500" />
+                            Light Mode
+                          </>
+                        )}
                       </Button>
-                      <Button
-                        variant={theme === "dark" ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setTheme("dark")}
-                      >
-                        <Moon className="mr-2 h-4 w-4" />
-                        Dark
-                      </Button>
-                      <Button
-                        variant={theme === "system" ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setTheme("system")}
-                      >
-                        <Monitor className="mr-2 h-4 w-4" />
-                        System
-                      </Button>
+                      <span className="text-sm text-muted-foreground">
+                        Click to toggle between themes
+                      </span>
                     </div>
                   </div>
                 </div>

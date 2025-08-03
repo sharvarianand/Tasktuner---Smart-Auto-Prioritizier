@@ -6,7 +6,7 @@ interface Logo3DProps {
   size?: 'sm' | 'md' | 'lg' | 'xl'
   animated?: boolean
   showText?: boolean
-  variant?: 'primary' | 'sidebar' | 'hero'
+  variant?: 'primary' | 'sidebar' | 'hero' | 'navbar'
   onClick?: () => void
   className?: string
 }
@@ -33,7 +33,8 @@ const Logo3D: React.FC<Logo3DProps> = ({
   const variants = {
     primary: 'from-orange-500 via-orange-400 to-white',
     sidebar: 'from-orange-500 via-orange-400 to-white', 
-    hero: 'from-orange-500 via-orange-400 to-white'
+    hero: 'from-orange-500 via-orange-400 to-white',
+    navbar: 'from-orange-500 via-orange-400 to-white'
   }
 
   useEffect(() => {
@@ -49,20 +50,42 @@ const Logo3D: React.FC<Logo3DProps> = ({
       animate={animated ? controls : { opacity: 1, scale: 1, rotateY: 0 }}
       transition={{ duration: 1.2, ease: [0.25, 0.46, 0.45, 0.94] }}
       className={`flex items-center gap-3 group cursor-pointer ${className}`}
-      style={{ perspective: '1000px' }}
+      style={{ 
+        perspective: '1000px',
+        transformStyle: 'preserve-3d'
+      }}
       onClick={onClick}
+      whileHover={animated && variant !== 'navbar' ? {
+        scale: 1.05,
+        rotateY: 5,
+        rotateX: 2
+      } : {}}
     >
       {/* 3D Logo Container */}
       <motion.div
         className={`${sizes[size].container} relative`}
-        animate={animated ? {
+        animate={animated ? (variant === 'navbar' ? {
+          y: [-2, 2, -2], // More visible floating for navbar
+          rotateY: [0, 15, 0, -15, 0], // More visible Y rotation for navbar
+          rotateX: [0, 5, 0, -5, 0], // More visible tilt
+        } : {
           y: [-2, 2, -2],
-          rotate: [0, 5, -5, 0],
-        } : {}}
-        transition={{
-          duration: 3,
+          rotateY: [0, 360], // Full rotation for non-navbar
+          rotateX: [0, 10, 0, -10, 0],
+        }) : {}}
+        transition={animated ? (variant === 'navbar' ? {
+          duration: 4, // Faster, more visible animation for navbar
           repeat: Infinity,
-          ease: [0.25, 0.46, 0.45, 0.94]
+          ease: "easeInOut",
+          times: [0, 0.25, 0.5, 0.75, 1]
+        } : {
+          duration: 8,
+          repeat: Infinity,
+          ease: "linear",
+          times: [0, 0.25, 0.5, 0.75, 1]
+        }) : {}}
+        style={{
+          transformStyle: 'preserve-3d',
         }}
       >
         {/* Main Logo Background with Gradient */}
@@ -70,14 +93,29 @@ const Logo3D: React.FC<Logo3DProps> = ({
           className={`w-full h-full rounded-full bg-gradient-to-br ${variants[variant]} shadow-2xl relative overflow-hidden`}
           style={{
             transformStyle: 'preserve-3d',
-            filter: 'drop-shadow(0 10px 20px rgba(0,0,0,0.3))'
+            filter: 'drop-shadow(0 10px 20px rgba(0,0,0,0.3))',
+            boxShadow: '0 0 30px rgba(249, 115, 22, 0.4), inset 0 0 20px rgba(255, 255, 255, 0.2)'
           }}
+          animate={animated ? (variant === 'navbar' ? {
+            rotateZ: [0, 30, 0, -30, 0], // More visible rotation for navbar
+          } : {
+            rotateZ: [0, 360], // Full rotation for other variants
+          }) : {}}
+          transition={animated ? (variant === 'navbar' ? {
+            duration: 5, // Moderate speed for navbar
+            repeat: Infinity,
+            ease: "easeInOut"
+          } : {
+            duration: 12, // Full rotation for others
+            repeat: Infinity,
+            ease: "linear"
+          }) : {}}
           whileHover={animated ? { 
-            scale: 1.1, 
-            rotateY: 15, 
-            rotateX: 5
+            scale: 1.15, 
+            rotateY: 25, 
+            rotateX: 15,
+            filter: 'drop-shadow(0 15px 30px rgba(0,0,0,0.4))'
           } : {}}
-          transition={{ duration: 0.3 }}
         >
           {/* Animated Background Gradient */}
           <motion.div
@@ -101,8 +139,14 @@ const Logo3D: React.FC<Logo3DProps> = ({
               animate={animated ? {
                 scale: [1, 1.1, 1],
                 opacity: [0.3, 0.6, 0.3],
+                rotateZ: [0, -360], // Counter-clockwise rotation
               } : {}}
-              transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
+              transition={{ 
+                duration: 6, 
+                repeat: Infinity, 
+                delay: 0.5,
+                ease: "linear"
+              }}
             />
             
             {/* Middle Ring */}
@@ -111,12 +155,37 @@ const Logo3D: React.FC<Logo3DProps> = ({
               animate={animated ? {
                 scale: [1, 1.05, 1],
                 opacity: [0.4, 0.7, 0.4],
+                rotateZ: [0, 360], // Clockwise rotation
               } : {}}
-              transition={{ duration: 2, repeat: Infinity, delay: 0.7 }}
+              transition={{ 
+                duration: 4, 
+                repeat: Infinity, 
+                delay: 0.7,
+                ease: "linear"
+              }}
             />
             
             {/* Central Target Icon */}
-            <Target className={`${sizes[size].icon} text-white drop-shadow-lg z-10 relative`} />
+            <motion.div
+              animate={animated ? (variant === 'navbar' ? {
+                rotateZ: [0, 45, 0, -45, 0], // More visible rotation for navbar
+                scale: [1, 1.1, 1], // Subtle scale for navbar
+              } : {
+                rotateZ: [0, 360], // Full rotation for others
+                scale: [1, 1.1, 1],
+              }) : {}}
+              transition={animated ? (variant === 'navbar' ? {
+                duration: 4, // Faster for navbar
+                repeat: Infinity,
+                ease: "easeInOut"
+              } : {
+                duration: 8, // Full rotation for others
+                repeat: Infinity,
+                ease: "linear"
+              }) : {}}
+            >
+              <Target className={`${sizes[size].icon} text-white drop-shadow-lg z-10 relative`} />
+            </motion.div>
           </motion.div>
 
           {/* Floating Elements */}
@@ -125,13 +194,16 @@ const Logo3D: React.FC<Logo3DProps> = ({
             animate={animated ? {
               scale: [0.8, 1.2, 0.8],
               opacity: [0.5, 1, 0.5],
-              rotate: [0, 180, 360],
+              rotateY: [0, 360],
+              rotateZ: [0, 180, 360],
             } : {}}
             transition={{
-              duration: 2,
+              duration: 3,
               repeat: Infinity,
-              delay: 0.2
+              delay: 0.2,
+              ease: "linear"
             }}
+            style={{ transformStyle: 'preserve-3d' }}
           >
             <Sparkles className="w-3 h-3 text-white opacity-80" />
           </motion.div>
@@ -141,13 +213,16 @@ const Logo3D: React.FC<Logo3DProps> = ({
             animate={animated ? {
               scale: [0.8, 1.2, 0.8],
               opacity: [0.5, 1, 0.5],
-              rotate: [0, 180, 360],
+              rotateX: [0, 360],
+              rotateZ: [360, 0],
             } : {}}
             transition={{
-              duration: 2,
+              duration: 4,
               repeat: Infinity,
-              delay: 0.5
+              delay: 1,
+              ease: "linear"
             }}
+            style={{ transformStyle: 'preserve-3d' }}
           >
             <Zap className="w-3 h-3 text-orange-200 opacity-70" />
           </motion.div>
@@ -157,13 +232,16 @@ const Logo3D: React.FC<Logo3DProps> = ({
             animate={animated ? {
               scale: [0.8, 1.2, 0.8],
               opacity: [0.5, 1, 0.5],
-              rotate: [0, 180, 360],
+              rotateY: [360, 0],
+              rotateZ: [0, 360],
             } : {}}
             transition={{
-              duration: 2,
+              duration: 5,
               repeat: Infinity,
-              delay: 1
+              delay: 0.5,
+              ease: "linear"
             }}
+            style={{ transformStyle: 'preserve-3d' }}
           >
             <Brain className="w-2 h-2 text-white opacity-60" />
           </motion.div>
@@ -173,13 +251,16 @@ const Logo3D: React.FC<Logo3DProps> = ({
             animate={animated ? {
               scale: [0.8, 1.2, 0.8],
               opacity: [0.5, 1, 0.5],
-              rotate: [0, 180, 360],
+              rotateZ: [0, 360],
+              rotateX: [0, 180, 360],
             } : {}}
             transition={{
-              duration: 2,
+              duration: 6,
               repeat: Infinity,
-              delay: 1.5
+              delay: 1.5,
+              ease: "linear"
             }}
+            style={{ transformStyle: 'preserve-3d' }}
           >
             <Flame className="w-2 h-2 text-orange-400 opacity-60" />
           </motion.div>
@@ -209,10 +290,11 @@ const Logo3D: React.FC<Logo3DProps> = ({
         >
           <motion.span
             className={`font-bold text-orange-500 dark:text-white ${sizes[size].text}`}
-            whileHover={animated ? { 
+            whileHover={animated && variant !== 'navbar' ? { 
               scale: 1.05
             } : {}}
             transition={{ duration: 0.2 }}
+            animate={variant === 'navbar' ? {} : {}} // No animation for navbar text
           >
             TaskTuner
           </motion.span>
