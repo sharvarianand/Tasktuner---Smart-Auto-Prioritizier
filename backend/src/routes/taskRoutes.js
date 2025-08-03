@@ -2,10 +2,10 @@ const express = require('express');
 const router = express.Router();
 
 const taskController = require('../controllers/taskController');
-// const requireAuth = require('../middleware/authMiddleware'); // 🔐 Optional Clerk auth
+const requireAuth = require('../middleware/authMiddleware'); // 🔐 Clerk auth enabled
 
-// 🔐 Protect all task routes (enable when auth is ready)
-// router.use(requireAuth);
+// 🔐 Protect all task routes
+router.use(requireAuth);
 
 // 📄 GET all tasks
 router.get('/', taskController.getTasks);

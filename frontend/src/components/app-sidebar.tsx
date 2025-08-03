@@ -13,6 +13,7 @@ import {
   SidebarHeader,
   useSidebar,
 } from "@/components/ui/sidebar"
+import Logo3D from "@/components/Logo3D"
 
 const items = [
   { title: "Dashboard", url: "/dashboard", icon: Home },
@@ -42,20 +43,20 @@ export function AppSidebar() {
     <Sidebar className={`${isCollapsed ? "w-14" : "w-64"} bg-sidebar border-r border-sidebar-border`} collapsible="icon">
       <SidebarHeader className="p-6 border-b border-sidebar-border">
         {!isCollapsed && (
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-xl overflow-hidden">
-              <img src="/Tasktuner_logo.png" alt="TaskTuner Logo" className="w-full h-full object-cover" />
-            </div>
-            <div className="flex flex-col">
-              <h2 className="text-xl font-bold text-sidebar-foreground">TaskTuner</h2>
-              <p className="text-xs text-sidebar-foreground/60">Savage Productivity</p>
-            </div>
-          </div>
+          <Logo3D 
+            size="md" 
+            variant="sidebar" 
+            animated={true} 
+            showText={true}
+          />
         )}
         {isCollapsed && (
-          <div className="w-10 h-10 rounded-xl overflow-hidden mx-auto">
-            <img src="/Tasktuner_logo.png" alt="TaskTuner Logo" className="w-full h-full object-cover" />
-          </div>
+          <Logo3D 
+            size="sm" 
+            variant="sidebar" 
+            animated={true} 
+            showText={false}
+          />
         )}
       </SidebarHeader>
 

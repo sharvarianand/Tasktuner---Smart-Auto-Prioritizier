@@ -240,6 +240,8 @@ const RoastGenerator = () => {
                   onClick={generateNewRoast}
                   disabled={isAnimating}
                   className="flex items-center justify-center gap-2 flex-1 sm:flex-none"
+                  glow
+                  particles
                 >
                   <RefreshCw className={`w-4 h-4 ${isAnimating ? 'animate-spin' : ''}`} />
                   Get Another Roast
@@ -250,6 +252,8 @@ const RoastGenerator = () => {
                   onClick={() => speakRoast(currentRoast.message)}
                   disabled={!settings.enabled || isSpeaking}
                   className="flex items-center justify-center gap-2 flex-1 sm:flex-none"
+                  glow
+                  particles
                 >
                   {isSpeaking ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
                   {isSpeaking ? 'Speaking...' : 'Speak This Roast'}
@@ -259,6 +263,8 @@ const RoastGenerator = () => {
                   variant="outline"
                   onClick={toggleVoice}
                   className={`flex items-center justify-center gap-2 flex-1 sm:flex-none ${settings.enabled ? 'bg-primary/10 text-primary border-primary' : ''}`}
+                  glow
+                  particles
                 >
                   {settings.enabled ? (
                     <>
@@ -280,6 +286,8 @@ const RoastGenerator = () => {
                   buttonText="Start Being Productive"
                   className="bg-primary text-primary-foreground hover:bg-primary/90 w-full sm:w-auto"
                   icon={<Zap className="w-4 h-4 mr-2" />}
+                  glow
+                  particles
                 />
               </div>
             </div>

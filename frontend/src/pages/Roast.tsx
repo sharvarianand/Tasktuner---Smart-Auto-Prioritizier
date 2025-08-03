@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { useVoiceContext } from "@/contexts/VoiceContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { speakTaskNotification } from "@/hooks/useVoiceNotifications";
+import Logo3D from "@/components/Logo3D";
 
 const Roast = () => {
   const navigate = useNavigate();
@@ -71,10 +72,12 @@ const Roast = () => {
               <span className="hidden sm:inline">Test</span>
             </Button>
 
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-bold">T</span>
-            </div>
-            <span className="font-bold text-lg text-foreground">TaskTuner</span>
+            <Logo3D 
+              size="sm" 
+              variant="primary" 
+              animated={true} 
+              showText={true}
+            />
           </div>
         </div>
       </nav>

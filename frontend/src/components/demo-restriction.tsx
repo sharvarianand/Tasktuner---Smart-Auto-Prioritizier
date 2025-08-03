@@ -32,6 +32,8 @@ export const DemoRestrictionBanner: React.FC = () => {
           <AuthButton 
             buttonText="Sign Up Now"
             className="bg-primary text-primary-foreground hover:bg-primary/90"
+            glow
+            particles
           />
         </div>
       </CardContent>
@@ -47,6 +49,8 @@ interface DemoRestrictedButtonProps {
   size?: "default" | "sm" | "lg" | "icon"
   disabled?: boolean
   allowInDemo?: boolean // New prop to allow certain actions in demo mode
+  glow?: boolean
+  particles?: boolean
 }
 
 export const DemoRestrictedButton: React.FC<DemoRestrictedButtonProps> = ({
@@ -57,6 +61,8 @@ export const DemoRestrictedButton: React.FC<DemoRestrictedButtonProps> = ({
   size = "default",
   disabled = false,
   allowInDemo = false,
+  glow = false,
+  particles = false,
   ...props
 }) => {
   const { isDemoMode, showDemoRestriction } = useDemoMode()
@@ -78,6 +84,8 @@ export const DemoRestrictedButton: React.FC<DemoRestrictedButtonProps> = ({
       variant={variant}
       size={size}
       disabled={isDisabled}
+      glow={glow}
+      particles={particles}
       {...props}
     >
       {isDemoMode && !allowInDemo && <Lock className="h-4 w-4 mr-2" />}

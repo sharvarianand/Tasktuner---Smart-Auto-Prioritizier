@@ -22,6 +22,7 @@ import { useUser } from "@clerk/clerk-react"
 import { useDemo } from "@/contexts/DemoContext"
 import { useUserData } from "@/hooks/useUserData"
 import { useVoiceContext } from "@/contexts/VoiceContext"
+import LiveBackground from "@/components/LiveBackground"
 
 const Dashboard = () => {
   const { user } = useUser();
@@ -96,7 +97,8 @@ const Dashboard = () => {
 
   return (
     <DashboardLayout title="Dashboard">
-      <div className="p-6 space-y-6">
+      <LiveBackground />
+      <div className="p-6 space-y-6 relative z-10">
         {/* Demo Restriction Banner */}
         <DemoRestrictionBanner />
         
@@ -176,6 +178,8 @@ const Dashboard = () => {
                 <DemoRestrictedButton 
                   className="h-16 flex flex-col items-center justify-center space-y-1 bg-primary text-primary-foreground hover:bg-primary/90"
                   onClick={() => navigate('/tasks')}
+                  glow
+                  particles
                 >
                   <Plus className="h-5 w-5" />
                   <span className="text-sm font-medium">Add Task</span>
@@ -184,6 +188,7 @@ const Dashboard = () => {
                   variant="outline" 
                   className="h-16 flex flex-col items-center justify-center space-y-1 border-border text-muted-foreground hover:text-card-foreground"
                   onClick={() => navigate('/goals')}
+                  glow
                 >
                   <Target className="h-5 w-5" />
                   <span className="text-sm font-medium">Set Goal</span>
@@ -192,6 +197,7 @@ const Dashboard = () => {
                   variant="outline" 
                   className="h-16 flex flex-col items-center justify-center space-y-1 border-border text-muted-foreground hover:text-card-foreground"
                   onClick={() => navigate('/calendar')}
+                  glow
                 >
                   <Calendar className="h-5 w-5" />
                   <span className="text-sm font-medium">Schedule</span>
@@ -200,6 +206,7 @@ const Dashboard = () => {
                   variant="outline" 
                   className="h-16 flex flex-col items-center justify-center space-y-1 border-border text-muted-foreground hover:text-card-foreground"
                   onClick={() => navigate('/analytics')}
+                  glow
                 >
                   <TrendingUp className="h-5 w-5" />
                   <span className="text-sm font-medium">Analytics</span>
@@ -247,6 +254,7 @@ const Dashboard = () => {
                         size="sm" 
                         onClick={() => navigate('/roast')}
                         className="text-xs p-1 h-auto"
+                        glow
                       >
                         Enable voice on /roast page
                       </Button>
@@ -257,6 +265,8 @@ const Dashboard = () => {
                   size="sm" 
                   variant="outline" 
                   className="mt-3 w-full border-primary text-primary hover:bg-primary hover:text-white"
+                  glow
+                  particles
                   onClick={() => {
                     const roasts = [
                       "Your procrastination level is legendary... unfortunately, that's not a good thing!",

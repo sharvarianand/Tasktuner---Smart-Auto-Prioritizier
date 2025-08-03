@@ -23,6 +23,8 @@ import { useNavigate } from "react-router-dom"
 import { ThemeToggle } from "@/components/theme-toggle"
 import AuthButton from "@/components/AuthButton"
 import RoastGenerator from "@/components/RoastGenerator"
+import Logo3D from "@/components/Logo3D"
+import HeroBackground3D from "@/components/HeroBackground3D"
 
 const Index = () => {
   const navigate = useNavigate()
@@ -85,15 +87,12 @@ const Index = () => {
       {/* Navigation */}
       <nav className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
-              <CheckCircle className="h-6 w-6 text-primary-foreground" />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-xl font-bold text-foreground">TaskTuner</span>
-              <span className="text-xs text-muted-foreground">Savage Productivity</span>
-            </div>
-          </div>
+          <Logo3D 
+            size="md" 
+            variant="primary" 
+            animated={true} 
+            showText={true}
+          />
           
           <div className="flex items-center space-x-4">
             <Button variant="ghost" onClick={() => scrollToSection('features')} className="text-foreground hover:text-primary">
@@ -115,12 +114,9 @@ const Index = () => {
       </nav>
 
       {/* Hero Section */}
-      <section className="relative overflow-hidden py-20 px-4">
-        <div className="absolute inset-0 bg-primary/5" />
-        <div className="absolute inset-0">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-primary/10 rounded-full blur-3xl" />
-          <div className="absolute top-1/4 right-1/4 w-64 h-64 bg-accent/10 rounded-full blur-3xl" />
-        </div>
+      <section className="relative overflow-hidden py-20 px-4 min-h-screen flex items-center">
+        <HeroBackground3D />
+        <div className="absolute inset-0 bg-gradient-to-br from-background/90 via-background/50 to-background/90" />
         
         <div className="container mx-auto text-center relative z-10">
           <motion.div
@@ -159,13 +155,73 @@ const Index = () => {
               </Button>
             </div>
 
-            {/* Hero Illustration */}
+            {/* Hero 3D Logo Display */}
             <motion.div
-              className="w-full max-w-2xl mx-auto h-64 bg-card rounded-2xl flex items-center justify-center border border-border"
+              className="w-full max-w-2xl mx-auto h-80 bg-gradient-to-br from-card/50 to-muted/30 backdrop-blur-sm rounded-3xl flex items-center justify-center border border-border/50 shadow-2xl relative overflow-hidden"
               animate={{ y: [0, -10, 0] }}
               transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
             >
-              <div className="text-6xl">🔥📋</div>
+              {/* Background Pattern */}
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(147,51,234,0.1),transparent_50%)]" />
+              <div className="absolute inset-0 bg-[conic-gradient(from_0deg,transparent,rgba(251,146,60,0.1),transparent)]" />
+              
+              {/* Main 3D Logo */}
+              <div className="relative z-10">
+                <Logo3D 
+                  size="xl" 
+                  variant="hero" 
+                  animated={true} 
+                  showText={false}
+                />
+              </div>
+
+              {/* Floating Elements */}
+              <motion.div
+                className="absolute top-8 left-8 opacity-60"
+                animate={{ 
+                  rotate: [0, 360],
+                  scale: [0.8, 1.2, 0.8]
+                }}
+                transition={{ duration: 4, repeat: Infinity }}
+              >
+                <Brain className="w-8 h-8 text-purple-400" />
+              </motion.div>
+
+              <motion.div
+                className="absolute top-12 right-12 opacity-60"
+                animate={{ 
+                  rotate: [360, 0],
+                  y: [-10, 10, -10]
+                }}
+                transition={{ duration: 3, repeat: Infinity, delay: 0.5 }}
+              >
+                <Zap className="w-6 h-6 text-yellow-400" />
+              </motion.div>
+
+              <motion.div
+                className="absolute bottom-8 left-12 opacity-60"
+                animate={{ 
+                  scale: [1, 1.5, 1],
+                  rotate: [0, 180, 360]
+                }}
+                transition={{ duration: 2.5, repeat: Infinity, delay: 1 }}
+              >
+                <Target className="w-7 h-7 text-green-400" />
+              </motion.div>
+
+              <motion.div
+                className="absolute bottom-12 right-8 opacity-60"
+                animate={{ 
+                  x: [-5, 5, -5],
+                  rotate: [0, -10, 10, 0]
+                }}
+                transition={{ duration: 2, repeat: Infinity, delay: 1.5 }}
+              >
+                <Trophy className="w-6 h-6 text-orange-400" />
+              </motion.div>
+
+              {/* Glow Effects */}
+              <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-orange-500/10 animate-pulse" />
             </motion.div>
 
             {/* Scroll indicator */}
