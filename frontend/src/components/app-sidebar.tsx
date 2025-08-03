@@ -14,6 +14,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import Logo3D from "@/components/Logo3D"
+import { useDemo } from "@/contexts/DemoContext"
 
 const items = [
   { title: "Dashboard", url: "/dashboard", icon: Home },
@@ -29,6 +30,7 @@ const items = [
 
 export function AppSidebar() {
   const { state } = useSidebar()
+  const { isDemo } = useDemo()
   const location = useLocation()
   const currentPath = location.pathname
   const isCollapsed = state === "collapsed"
@@ -39,8 +41,13 @@ export function AppSidebar() {
       ? "bg-primary/20 text-primary font-medium border-r-2 border-primary" 
       : "hover:bg-secondary/10 text-sidebar-foreground hover:text-sidebar-foreground"
 
+  // Helper function to add demo parameter to URLs when in demo mode
+  const getUrl = (baseUrl: string) => {
+    return isDemo ? `${baseUrl}?demo=true` : baseUrl
+  }
+
   return (
-    <Sidebar className={`${isCollapsed ? "w-14" : "w-64"} bg-sidebar border-r border-sidebar-border`} collapsible="icon">
+    <Sidebar className={`${isCollapsed ? "w-14" : "w-64"} bg-sidebar/80 backdrop-blur-sm border-r border-sidebar-border`} collapsible="icon">
       <SidebarHeader className="p-6 border-b border-sidebar-border">
         {!isCollapsed && (
           <Logo3D 
@@ -60,7 +67,7 @@ export function AppSidebar() {
         )}
       </SidebarHeader>
 
-      <SidebarContent className="bg-sidebar">
+      <SidebarContent className="bg-sidebar/80 backdrop-blur-sm">
         <SidebarGroup>
           <SidebarGroupLabel className={`${isCollapsed ? "sr-only" : ""} text-sidebar-foreground/60`}>
             Main Navigation
@@ -72,7 +79,7 @@ export function AppSidebar() {
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <NavLink 
-                      to={item.url} 
+                      to={getUrl(item.url)} 
                       end 
                       className={({ isActive }) => getNavCls({ isActive })}
                     >

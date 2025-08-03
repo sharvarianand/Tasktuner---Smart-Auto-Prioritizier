@@ -4,6 +4,7 @@ import { DashboardLayout } from "@/components/dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { DemoRestrictionBanner, DemoRestrictedButton } from "@/components/demo-restriction"
 import { 
   BarChart, 
   Bar, 
@@ -113,7 +114,10 @@ const Analytics = () => {
 
   return (
     <DashboardLayout title="Analytics">
-      <div className="p-6 space-y-6">
+      <div className="p-6 space-y-6 relative z-10">
+        {/* Demo Restriction Banner */}
+        <DemoRestrictionBanner />
+        
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -339,10 +343,10 @@ const Analytics = () => {
                   </p>
                 </div>
                 
-                <Button variant="outline" size="sm" className="w-full">
+                <DemoRestrictedButton variant="outline" size="sm" className="w-full">
                   <Award className="mr-2 h-3 w-3" />
                   View All Roasts
-                </Button>
+                </DemoRestrictedButton>
               </CardContent>
             </Card>
           </motion.div>

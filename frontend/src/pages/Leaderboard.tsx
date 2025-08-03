@@ -100,7 +100,7 @@ const Leaderboard = () => {
   return (
     <DashboardLayout title="Leaderboard">
       <DemoRestrictionBanner />
-      <div className="p-6 space-y-6">
+      <div className="p-6 space-y-6 relative z-10">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}

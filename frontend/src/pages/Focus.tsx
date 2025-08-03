@@ -198,7 +198,9 @@ const Focus = () => {
       setIsActive(false);
       setCurrentSession(null);
     }
-    navigate("/dashboard");
+    // Preserve demo mode when navigating back to dashboard
+    const url = isDemoMode ? "/dashboard?demo=true" : "/dashboard";
+    navigate(url);
   };
 
   const progress = ((duration[0] * 60 - timeRemaining) / (duration[0] * 60)) * 100;

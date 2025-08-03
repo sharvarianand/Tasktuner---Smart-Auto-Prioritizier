@@ -20,7 +20,7 @@ export function ThemeToggle() {
         variant="ghost" 
         size="icon"
         onClick={toggleTheme}
-        className="relative group overflow-hidden rounded-xl border border-border/50 bg-gradient-to-br from-background/50 to-muted/30 backdrop-blur-sm hover:from-primary/10 hover:to-secondary/10 transition-all duration-300 shadow-lg hover:shadow-xl hover:shadow-primary/20"
+        className="relative group overflow-hidden rounded-xl border border-border/50 bg-gradient-to-br from-background/50 to-muted/30 backdrop-blur-sm hover:from-primary/10 hover:to-secondary/10 transition-all duration-300 shadow-lg hover:shadow-xl hover:shadow-primary/20 z-30"
         style={{
           transformStyle: 'preserve-3d',
           filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.1))'

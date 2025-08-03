@@ -1,6 +1,7 @@
 import { useAuth, RedirectToSignIn } from "@clerk/clerk-react";
 import { useSearchParams } from "react-router-dom";
-import { ReactNode } from "react";
+import { ReactNode, useEffect, useState } from "react";
+import { useDemo } from "@/contexts/DemoContext";
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -8,11 +9,33 @@ interface ProtectedRouteProps {
 
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const { isSignedIn, isLoaded } = useAuth();
+  const { isDemo } = useDemo();
   const [searchParams] = useSearchParams();
-  const isDemo = searchParams.get('demo') === 'true';
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  // Show loading while Clerk is initializing
-  if (!isLoaded) {
+  // Give demo context time to initialize from URL params
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsInitialized(true);
+    }, 100); // Small delay to allow demo context to process URL params
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Debug logging
+  useEffect(() => {
+    console.log('ProtectedRoute state:', {
+      isLoaded,
+      isSignedIn,
+      isDemo,
+      isInitialized,
+      demoParam: searchParams.get('demo'),
+      sessionDemo: sessionStorage.getItem('tasktuner-demo-mode')
+    });
+  }, [isLoaded, isSignedIn, isDemo, isInitialized, searchParams]);
+
+  // Show loading while Clerk is initializing or demo context is initializing
+  if (!isLoaded || !isInitialized) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
@@ -23,16 +46,23 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     );
   }
 
+  // Check for demo parameter in URL as backup
+  const isDemoFromUrl = searchParams.get('demo') === 'true';
+  const isDemoFromSession = sessionStorage.getItem('tasktuner-demo-mode') === 'true';
+  
   // Allow demo access without authentication
-  if (isDemo) {
+  if (isDemo || isDemoFromUrl || isDemoFromSession) {
+    console.log('Allowing demo access');
     return <>{children}</>;
   }
 
   // Redirect to sign-in if not authenticated
   if (!isSignedIn) {
+    console.log('Redirecting to sign-in');
     return <RedirectToSignIn afterSignInUrl="/dashboard" afterSignUpUrl="/dashboard" />;
   }
 
+  console.log('Allowing authenticated access');
   return <>{children}</>;
 };
 

@@ -4,6 +4,7 @@ import { DashboardLayout } from "@/components/dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { DemoRestrictionBanner, DemoRestrictedButton } from "@/components/demo-restriction"
 import { 
   Calendar as CalendarIcon, 
   Clock, 
@@ -83,7 +84,10 @@ const Calendar = () => {
 
   return (
     <DashboardLayout title="Calendar">
-      <div className="p-6 space-y-6">
+      <div className="p-6 space-y-6 relative z-10">
+        {/* Demo Restriction Banner */}
+        <DemoRestrictionBanner />
+        
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -97,42 +101,44 @@ const Calendar = () => {
           
           <div className="flex items-center gap-2">
             <div className="flex items-center border rounded-lg">
-              <Button
+              <DemoRestrictedButton
                 variant={view === 'week' ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => setView('week')}
                 className="rounded-r-none"
+                allowInDemo={true}
               >
                 Week
-              </Button>
-              <Button
+              </DemoRestrictedButton>
+              <DemoRestrictedButton
                 variant={view === 'month' ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => setView('month')}
                 className="rounded-l-none"
+                allowInDemo={true}
               >
                 Month
-              </Button>
+              </DemoRestrictedButton>
             </div>
             
             <div className="flex items-center gap-1">
-              <Button variant="outline" size="icon">
+              <DemoRestrictedButton variant="outline" size="icon">
                 <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <Button variant="outline" size="icon">
+              </DemoRestrictedButton>
+              <DemoRestrictedButton variant="outline" size="icon">
                 <ChevronRight className="h-4 w-4" />
-              </Button>
+              </DemoRestrictedButton>
             </div>
             
-            <Button variant="outline" className="gap-2">
+            <DemoRestrictedButton variant="outline" className="gap-2">
               <RefreshCw className="h-4 w-4" />
               Sync Calendar
-            </Button>
+            </DemoRestrictedButton>
             
-            <Button className="bg-primary text-primary-foreground shadow-glow hover:bg-primary/90 gap-2">
+            <DemoRestrictedButton className="bg-primary text-primary-foreground shadow-glow hover:bg-primary/90 gap-2">
               <Plus className="h-4 w-4" />
               Add Event
-            </Button>
+            </DemoRestrictedButton>
           </div>
         </motion.div>
 
@@ -248,15 +254,15 @@ const Calendar = () => {
                   <Badge variant="secondary">Active</Badge>
                 </div>
                 
-                <Button variant="outline" size="sm" className="w-full gap-2">
+                <DemoRestrictedButton variant="outline" size="sm" className="w-full gap-2">
                   <ExternalLink className="h-3 w-3" />
                   Open in Google Calendar
-                </Button>
+                </DemoRestrictedButton>
                 
-                <Button variant="outline" size="sm" className="w-full gap-2">
+                <DemoRestrictedButton variant="outline" size="sm" className="w-full gap-2">
                   <RefreshCw className="h-3 w-3" />
                   Force Sync
-                </Button>
+                </DemoRestrictedButton>
               </CardContent>
             </Card>
 
@@ -266,18 +272,18 @@ const Calendar = () => {
                 <CardTitle>Quick Actions</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                <Button variant="outline" size="sm" className="w-full justify-start">
+                <DemoRestrictedButton variant="outline" size="sm" className="w-full justify-start">
                   <Plus className="mr-2 h-3 w-3" />
                   Block Study Time
-                </Button>
-                <Button variant="outline" size="sm" className="w-full justify-start">
+                </DemoRestrictedButton>
+                <DemoRestrictedButton variant="outline" size="sm" className="w-full justify-start">
                   <Clock className="mr-2 h-3 w-3" />
                   Schedule Break
-                </Button>
-                <Button variant="outline" size="sm" className="w-full justify-start">
+                </DemoRestrictedButton>
+                <DemoRestrictedButton variant="outline" size="sm" className="w-full justify-start">
                   <CalendarIcon className="mr-2 h-3 w-3" />
                   Plan Tomorrow
-                </Button>
+                </DemoRestrictedButton>
               </CardContent>
             </Card>
 

@@ -8,7 +8,12 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
-import { DemoRestrictionBanner, DemoRestrictedButton } from "@/components/demo-restriction"
+import { 
+  DemoRestrictionBanner, 
+  DemoRestrictedButton, 
+  DemoRestrictedInput, 
+  DemoRestrictedTextarea 
+} from "@/components/demo-restriction"
 import { 
   Dialog,
   DialogContent,
@@ -168,7 +173,7 @@ const Goals = () => {
 
   return (
     <DashboardLayout title="Goals">
-      <div className="p-6 space-y-6">
+      <div className="p-6 space-y-6 relative z-10">
         {/* Demo Restriction Banner */}
         <DemoRestrictionBanner />
         
@@ -243,10 +248,10 @@ const Goals = () => {
           
           <Dialog>
             <DialogTrigger asChild>
-              <Button className="bg-primary text-primary-foreground shadow-glow hover:bg-primary/90">
+              <DemoRestrictedButton className="bg-primary text-primary-foreground shadow-glow hover:bg-primary/90">
                 <Plus className="mr-2 h-4 w-4" />
                 Add Goal
-              </Button>
+              </DemoRestrictedButton>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
@@ -257,35 +262,35 @@ const Goals = () => {
               </DialogHeader>
               
               <div className="space-y-4">
-                <Input
+                <DemoRestrictedInput
                   placeholder="Goal title (e.g., Learn Machine Learning)"
                   value={newGoal.title}
                   onChange={(e) => setNewGoal({...newGoal, title: e.target.value})}
                 />
                 
-                <Textarea
+                <DemoRestrictedTextarea
                   placeholder="Describe your goal in detail..."
                   value={newGoal.description}
                   onChange={(e) => setNewGoal({...newGoal, description: e.target.value})}
                 />
                 
                 <div className="grid grid-cols-2 gap-4">
-                  <Input
+                  <DemoRestrictedInput
                     placeholder="Category (e.g., Learning, Health)"
                     value={newGoal.category}
                     onChange={(e) => setNewGoal({...newGoal, category: e.target.value})}
                   />
                   
-                  <Input
+                  <DemoRestrictedInput
                     type="date"
                     value={newGoal.targetDate}
                     onChange={(e) => setNewGoal({...newGoal, targetDate: e.target.value})}
                   />
                 </div>
                 
-                <Button onClick={addGoal} className="w-full">
+                <DemoRestrictedButton onClick={addGoal} className="w-full">
                   Create Goal
-                </Button>
+                </DemoRestrictedButton>
               </div>
             </DialogContent>
           </Dialog>
@@ -403,7 +408,7 @@ const Goals = () => {
                   </p>
                   <Dialog>
                     <DialogTrigger asChild>
-                      <Button>Add Your First Goal</Button>
+                      <DemoRestrictedButton>Add Your First Goal</DemoRestrictedButton>
                     </DialogTrigger>
                   </Dialog>
                 </div>

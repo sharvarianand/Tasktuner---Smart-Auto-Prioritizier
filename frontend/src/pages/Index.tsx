@@ -27,16 +27,23 @@ import RoastGenerator from "@/components/RoastGenerator"
 import Logo3D from "@/components/Logo3D"
 import InteractiveLogo3D from "@/components/InteractiveLogo3D"
 import LiveBackground from "@/components/LiveBackground"
+import { useDemoMode } from "@/contexts/DemoContext"
 
 const Index = () => {
   const navigate = useNavigate()
   const { isSignedIn } = useUser()
+  const { setDemoMode } = useDemoMode()
 
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId)
     if (element) {
       element.scrollIntoView({ behavior: 'smooth' })
     }
+  }
+
+  const handleTryDemo = () => {
+    setDemoMode(true)
+    navigate('/dashboard?demo=true')
   }
 
   const handleLogoAction = (action: string) => {
@@ -130,7 +137,7 @@ const Index = () => {
             </Button>
             <ThemeToggle />
             {!isSignedIn && (
-              <Button variant="ghost" onClick={() => navigate('/dashboard?demo=true')} className="text-foreground hover:text-primary" glow>
+              <Button variant="ghost" onClick={handleTryDemo} className="text-foreground hover:text-primary" glow>
                 Try Demo
               </Button>
             )}

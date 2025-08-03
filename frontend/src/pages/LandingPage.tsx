@@ -25,9 +25,16 @@ import AuthButton from "@/components/AuthButton"
 import RoastGenerator from "@/components/RoastGenerator"
 import Logo3D from "@/components/Logo3D"
 import HeroBackground3D from "@/components/HeroBackground3D"
+import { useDemoMode } from "@/contexts/DemoContext"
 
 const Index = () => {
   const navigate = useNavigate()
+  const { setDemoMode } = useDemoMode()
+
+  const handleTryDemo = () => {
+    setDemoMode(true)
+    navigate('/dashboard?demo=true')
+  }
 
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId)
@@ -105,7 +112,7 @@ const Index = () => {
               Testimonials
             </Button>
             <ThemeToggle />
-            <Button variant="ghost" onClick={() => navigate('/dashboard?demo=true')} className="text-foreground hover:text-primary">
+            <Button variant="ghost" onClick={handleTryDemo} className="text-foreground hover:text-primary">
               Try Demo
             </Button>
             <AuthButton />

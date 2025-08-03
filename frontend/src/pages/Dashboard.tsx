@@ -1,4 +1,5 @@
 
+import React, { useEffect } from "react"
 import { motion } from "framer-motion"
 import { DashboardLayout } from "@/components/dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -22,7 +23,6 @@ import { useUser } from "@clerk/clerk-react"
 import { useDemo } from "@/contexts/DemoContext"
 import { useUserData } from "@/hooks/useUserData"
 import { useVoiceContext } from "@/contexts/VoiceContext"
-import LiveBackground from "@/components/LiveBackground"
 
 const Dashboard = () => {
   const { user } = useUser();
@@ -30,6 +30,18 @@ const Dashboard = () => {
   const { userData, isLoadingUserData, isNewUser } = useUserData();
   const { settings } = useVoiceContext();
   const navigate = useNavigate();
+  
+  // Scroll to top when component mounts (especially important for demo mode)
+  useEffect(() => {
+    // Use instant scroll for better user experience when navigating from Try Demo
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }, []);
+  
+  // Helper function to navigate with demo parameter when in demo mode
+  const navigateWithDemo = (path: string) => {
+    const url = isDemo ? `${path}?demo=true` : path;
+    navigate(url);
+  };
   
   // Get user's first name or fallback to username/email
   const userName = user?.firstName || user?.username || user?.emailAddresses?.[0]?.emailAddress?.split('@')[0] || 'Procrastinator';
@@ -97,7 +109,6 @@ const Dashboard = () => {
 
   return (
     <DashboardLayout title="Dashboard">
-      <LiveBackground />
       <div className="p-6 space-y-6 relative z-10">
         {/* Demo Restriction Banner */}
         <DemoRestrictionBanner />
@@ -177,7 +188,7 @@ const Dashboard = () => {
               <CardContent className="grid grid-cols-2 gap-4">
                 <DemoRestrictedButton 
                   className="h-16 flex flex-col items-center justify-center space-y-1 bg-primary text-primary-foreground hover:bg-primary/90"
-                  onClick={() => navigate('/tasks')}
+                  onClick={() => navigateWithDemo('/tasks')}
                   glow
                   particles
                 >
@@ -187,7 +198,7 @@ const Dashboard = () => {
                 <DemoRestrictedButton 
                   variant="outline" 
                   className="h-16 flex flex-col items-center justify-center space-y-1 border-border text-muted-foreground hover:text-card-foreground"
-                  onClick={() => navigate('/goals')}
+                  onClick={() => navigateWithDemo('/goals')}
                   glow
                 >
                   <Target className="h-5 w-5" />
@@ -196,7 +207,7 @@ const Dashboard = () => {
                 <DemoRestrictedButton 
                   variant="outline" 
                   className="h-16 flex flex-col items-center justify-center space-y-1 border-border text-muted-foreground hover:text-card-foreground"
-                  onClick={() => navigate('/calendar')}
+                  onClick={() => navigateWithDemo('/calendar')}
                   glow
                 >
                   <Calendar className="h-5 w-5" />
@@ -205,7 +216,7 @@ const Dashboard = () => {
                 <DemoRestrictedButton 
                   variant="outline" 
                   className="h-16 flex flex-col items-center justify-center space-y-1 border-border text-muted-foreground hover:text-card-foreground"
-                  onClick={() => navigate('/analytics')}
+                  onClick={() => navigateWithDemo('/analytics')}
                   glow
                 >
                   <TrendingUp className="h-5 w-5" />
@@ -223,7 +234,7 @@ const Dashboard = () => {
             className="space-y-6"
           >
             {/* Focus Mode */}
-            <FocusMode onNavigateToFocus={() => navigate('/focus')} />
+            <FocusMode onNavigateToFocus={() => navigateWithDemo('/focus')} isDemo={isDemo} />
             
             {/* Motivation Corner */}
             <Card className="bg-gradient-to-br from-primary/20 to-secondary/20 border-primary/30">
@@ -252,7 +263,7 @@ const Dashboard = () => {
                       <Button 
                         variant="ghost" 
                         size="sm" 
-                        onClick={() => navigate('/roast')}
+                        onClick={() => navigateWithDemo('/roast')}
                         className="text-xs p-1 h-auto"
                         glow
                       >

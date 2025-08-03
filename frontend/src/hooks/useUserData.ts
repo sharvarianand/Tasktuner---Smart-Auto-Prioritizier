@@ -28,13 +28,13 @@ const MOCK_USER_DATA = {
 
 // Motivational leaderboard that always appears
 export const MOTIVATIONAL_LEADERBOARD = [
-  { id: 1, rank: 1, name: "Alex Chen", xp: 15420, streak: 42, tasksCompleted: 312, avatar: "AC", change: 'same' as const, badge: "Productivity Master 👑" },
-  { id: 2, rank: 2, name: "Sarah Kim", xp: 14890, streak: 38, tasksCompleted: 298, avatar: "SK", change: 'up' as const, badge: "Streak Legend 🔥" },
-  { id: 3, rank: 3, name: "Mike Johnson", xp: 13650, streak: 35, tasksCompleted: 275, avatar: "MJ", change: 'down' as const, badge: "Task Crusher 💪" },
-  { id: 4, rank: 4, name: "Emma Davis", xp: 12980, streak: 31, tasksCompleted: 260, avatar: "ED", change: 'up' as const, badge: "Goal Getter 🎯" },
+  { id: 1, rank: 1, name: "Arjun Sharma", xp: 15420, streak: 42, tasksCompleted: 312, avatar: "AS", change: 'same' as const, badge: "Productivity Master 👑" },
+  { id: 2, rank: 2, name: "Priya Patel", xp: 14890, streak: 38, tasksCompleted: 298, avatar: "PP", change: 'up' as const, badge: "Streak Legend 🔥" },
+  { id: 3, rank: 3, name: "Rahul Gupta", xp: 13650, streak: 35, tasksCompleted: 275, avatar: "RG", change: 'down' as const, badge: "Task Crusher 💪" },
+  { id: 4, rank: 4, name: "Ananya Singh", xp: 12980, streak: 31, tasksCompleted: 260, avatar: "AS", change: 'up' as const, badge: "Goal Getter 🎯" },
   { id: 5, rank: 5, name: "You", xp: 0, streak: 0, tasksCompleted: 0, avatar: "YU", change: 'up' as const, badge: "Rising Star ⭐" }, // Will be updated with real data
-  { id: 6, rank: 6, name: "Ryan Wilson", xp: 11200, streak: 28, tasksCompleted: 224, avatar: "RW", change: 'same' as const, badge: "Consistency King 👑" },
-  { id: 7, rank: 7, name: "Lisa Zhang", xp: 10850, streak: 25, tasksCompleted: 217, avatar: "LZ", change: 'up' as const, badge: "Focus Fighter 🥊" },
+  { id: 6, rank: 6, name: "Vikram Reddy", xp: 11200, streak: 28, tasksCompleted: 224, avatar: "VR", change: 'same' as const, badge: "Consistency King 👑" },
+  { id: 7, rank: 7, name: "Kavya Menon", xp: 10850, streak: 25, tasksCompleted: 217, avatar: "KM", change: 'up' as const, badge: "Focus Fighter 🥊" },
 ];
 
 export const useUserData = () => {

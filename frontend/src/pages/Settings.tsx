@@ -1,17 +1,17 @@
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { motion } from "framer-motion"
 import { DashboardLayout } from "@/components/dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
-import { DemoRestrictionBanner, DemoRestrictedButton } from "@/components/demo-restriction"
-import { useUser } from "@clerk/clerk-react"
+import { 
+  DemoRestrictionBanner, 
+  DemoRestrictedButton, 
+  DemoRestrictedInput, 
+  DemoRestrictedSwitch 
+} from "@/components/demo-restriction"
 import { useDemoMode } from "@/contexts/DemoContext"
 import { 
   Select,
@@ -30,7 +30,6 @@ import {
 } from "@/components/ui/dialog"
 import { 
   Settings as SettingsIcon,
-  User,
   Bell,
   Volume2,
   Trash2,
@@ -38,9 +37,6 @@ import {
   Clock,
   Palette,
   LogOut,
-  Edit,
-  Camera,
-  Flame,
   Moon,
   Sun
 } from "lucide-react"
@@ -49,7 +45,6 @@ import { toast } from "sonner"
 
 const Settings = () => {
   const { theme, setTheme } = useTheme()
-  const { user } = useUser()
   const { isDemoMode } = useDemoMode()
   
   const [settings, setSettings] = useState({
@@ -83,42 +78,6 @@ const Settings = () => {
     }
   })
 
-  const [profile, setProfile] = useState({
-    name: user?.firstName && user?.lastName 
-      ? `${user.firstName} ${user.lastName}` 
-      : user?.username || user?.emailAddresses[0]?.emailAddress?.split('@')[0] || "User",
-    email: user?.emailAddresses[0]?.emailAddress || "user@example.com",
-    bio: "Aspiring developer trying to get my life together, one task at a time.",
-    timezone: "Asia/Kolkata"
-  })
-
-  // Get user initials for avatar fallback
-  const getUserInitials = () => {
-    if (user?.firstName && user?.lastName) {
-      return `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`.toUpperCase()
-    }
-    if (user?.username) {
-      return user.username.substring(0, 2).toUpperCase()
-    }
-    if (user?.emailAddresses[0]?.emailAddress) {
-      return user.emailAddresses[0].emailAddress.substring(0, 2).toUpperCase()
-    }
-    return "US"
-  }
-
-  // Update profile when user data changes
-  useEffect(() => {
-    if (user) {
-      setProfile(prev => ({
-        ...prev,
-        name: user?.firstName && user?.lastName 
-          ? `${user.firstName} ${user.lastName}` 
-          : user?.username || user?.emailAddresses[0]?.emailAddress?.split('@')[0] || "User",
-        email: user?.emailAddresses[0]?.emailAddress || "user@example.com"
-      }))
-    }
-  }, [user])
-
   const updateSetting = (category: string, key: string, value: any) => {
     setSettings(prev => ({
       ...prev,
@@ -141,7 +100,7 @@ const Settings = () => {
   return (
     <DashboardLayout title="Settings">
       <DemoRestrictionBanner />
-      <div className="p-6 space-y-6">
+      <div className="p-6 space-y-6 relative z-10">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -153,102 +112,13 @@ const Settings = () => {
           </p>
         </motion.div>
 
-        <div className="grid lg:grid-cols-3 gap-6">
-          {/* Profile Settings */}
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.1 }}
-            className="lg:col-span-1"
-          >
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <User className="mr-2 h-5 w-5" />
-                  Profile
-                </CardTitle>
-                <CardDescription>
-                  Manage your account information
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center gap-4">
-                  <div className="relative">
-                    <Avatar className="h-16 w-16">
-                      <AvatarImage src={user?.imageUrl} />
-                      <AvatarFallback>{getUserInitials()}</AvatarFallback>
-                    </Avatar>
-                    <Button size="icon" variant="outline" className="absolute -bottom-1 -right-1 h-6 w-6">
-                      <Camera className="h-3 w-3" />
-                    </Button>
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold">{profile.name}</h3>
-                    <p className="text-sm text-muted-foreground">{profile.email}</p>
-                    <Badge variant="secondary" className="mt-1">Pro User</Badge>
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  <div>
-                    <Label htmlFor="name">Display Name</Label>
-                    <Input
-                      id="name"
-                      value={profile.name}
-                      onChange={(e) => setProfile({...profile, name: e.target.value})}
-                      disabled={isDemoMode}
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="bio">Bio</Label>
-                    <Textarea
-                      id="bio"
-                      value={profile.bio}
-                      onChange={(e) => setProfile({...profile, bio: e.target.value})}
-                      rows={3}
-                      disabled={isDemoMode}
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="timezone">Timezone</Label>
-                    <Select 
-                      value={profile.timezone} 
-                      onValueChange={(value) => setProfile({...profile, timezone: value})}
-                      disabled={isDemoMode}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="America/New_York">Eastern Time</SelectItem>
-                        <SelectItem value="America/Chicago">Central Time</SelectItem>
-                        <SelectItem value="America/Denver">Mountain Time</SelectItem>
-                        <SelectItem value="America/Los_Angeles">Pacific Time</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <DemoRestrictedButton 
-                  variant="outline" 
-                  className="w-full"
-                  onClick={() => toast.info("Profile editing coming soon!")}
-                >
-                  <Edit className="mr-2 h-4 w-4" />
-                  Edit Profile
-                </DemoRestrictedButton>
-              </CardContent>
-            </Card>
-          </motion.div>
-
+        <div className="grid lg:grid-cols-1 gap-6">
           {/* Main Settings */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="lg:col-span-2 space-y-6"
+            transition={{ delay: 0.1 }}
+            className="space-y-6"
           >
             {/* Appearance */}
             <Card>
@@ -315,7 +185,7 @@ const Settings = () => {
                         {key.replace(/([A-Z])/g, ' $1').trim()}
                       </Label>
                     </div>
-                    <Switch
+                    <DemoRestrictedSwitch
                       checked={value}
                       onCheckedChange={(checked) => updateSetting('notifications', key, checked)}
                     />
@@ -341,7 +211,7 @@ const Settings = () => {
                     <Label>Enable Voice Output</Label>
                     <p className="text-sm text-muted-foreground">Hear your roasts out loud</p>
                   </div>
-                  <Switch
+                  <DemoRestrictedSwitch
                     checked={settings.voice.enabled}
                     onCheckedChange={(checked) => updateSetting('voice', 'enabled', checked)}
                   />
@@ -352,7 +222,7 @@ const Settings = () => {
                     <Label>Enable Roast Generator</Label>
                     <p className="text-sm text-muted-foreground">Get motivational roasts</p>
                   </div>
-                  <Switch
+                  <DemoRestrictedSwitch
                     checked={settings.roasts.enabled}
                     onCheckedChange={(checked) => updateSetting('roasts', 'enabled', checked)}
                   />
@@ -392,7 +262,7 @@ const Settings = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label>Work Start Time</Label>
-                    <Input
+                    <DemoRestrictedInput
                       type="time"
                       value={settings.productivity.workingHours.start}
                       onChange={(e) => updateSetting('productivity', 'workingHours', {
@@ -403,7 +273,7 @@ const Settings = () => {
                   </div>
                   <div>
                     <Label>Work End Time</Label>
-                    <Input
+                    <DemoRestrictedInput
                       type="time"
                       value={settings.productivity.workingHours.end}
                       onChange={(e) => updateSetting('productivity', 'workingHours', {
@@ -419,7 +289,7 @@ const Settings = () => {
                     <Label>Auto-Schedule Tasks</Label>
                     <p className="text-sm text-muted-foreground">Let AI schedule your tasks</p>
                   </div>
-                  <Switch
+                  <DemoRestrictedSwitch
                     checked={settings.productivity.autoSchedule}
                     onCheckedChange={(checked) => updateSetting('productivity', 'autoSchedule', checked)}
                   />
@@ -440,15 +310,15 @@ const Settings = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex gap-2">
-                  <Button variant="outline" onClick={exportData}>
+                  <DemoRestrictedButton variant="outline" onClick={exportData}>
                     Export Data
-                  </Button>
+                  </DemoRestrictedButton>
                   <Dialog>
                     <DialogTrigger asChild>
-                      <Button variant="destructive">
+                      <DemoRestrictedButton variant="destructive">
                         <Trash2 className="mr-2 h-4 w-4" />
                         Clear All Data
-                      </Button>
+                      </DemoRestrictedButton>
                     </DialogTrigger>
                     <DialogContent>
                       <DialogHeader>
@@ -460,9 +330,9 @@ const Settings = () => {
                       </DialogHeader>
                       <div className="flex gap-2 justify-end">
                         <Button variant="outline">Cancel</Button>
-                        <Button variant="destructive" onClick={clearAllData}>
+                        <DemoRestrictedButton variant="destructive" onClick={clearAllData}>
                           Yes, delete everything
-                        </Button>
+                        </DemoRestrictedButton>
                       </div>
                     </DialogContent>
                   </Dialog>

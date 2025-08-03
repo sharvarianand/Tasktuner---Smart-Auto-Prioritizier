@@ -8,7 +8,12 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
-import { DemoRestrictionBanner, DemoRestrictedButton } from "@/components/demo-restriction"
+import { 
+  DemoRestrictionBanner, 
+  DemoRestrictedButton, 
+  DemoRestrictedInput, 
+  DemoRestrictedTextarea 
+} from "@/components/demo-restriction"
 import { 
   Select,
   SelectContent,
@@ -316,7 +321,7 @@ const Tasks = () => {
   if (isLoading) {
     return (
       <DashboardLayout title="Tasks">
-        <div className="p-6 space-y-6">
+        <div className="p-6 space-y-6 relative z-10">
           <div className="flex items-center justify-center py-12">
             <RefreshCw className="h-6 w-6 animate-spin mr-2" />
             <span>Loading tasks...</span>
@@ -328,7 +333,7 @@ const Tasks = () => {
 
   return (
     <DashboardLayout title="Tasks">
-      <div className="p-6 space-y-6">
+      <div className="p-6 space-y-6 relative z-10">
         {/* Demo Restriction Banner */}
         <DemoRestrictionBanner />
         
@@ -396,10 +401,10 @@ const Tasks = () => {
           <div className="flex flex-col sm:flex-row gap-3">
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="bg-primary text-primary-foreground shadow-glow hover:bg-primary/90">
+                <DemoRestrictedButton className="bg-primary text-primary-foreground shadow-glow hover:bg-primary/90">
                   <Plus className="mr-2 h-4 w-4" />
                   Add Task
-                </Button>
+                </DemoRestrictedButton>
               </DialogTrigger>
               <DialogContent>
               <DialogHeader>
@@ -410,13 +415,13 @@ const Tasks = () => {
               </DialogHeader>
               
               <div className="space-y-4">
-                <Input
+                <DemoRestrictedInput
                   placeholder="Task title"
                   value={newTask.title}
                   onChange={(e) => setNewTask({...newTask, title: e.target.value})}
                 />
                 
-                <Textarea
+                <DemoRestrictedTextarea
                   placeholder="Description (optional)"
                   value={newTask.description}
                   onChange={(e) => setNewTask({...newTask, description: e.target.value})}
@@ -446,7 +451,7 @@ const Tasks = () => {
                   </Select>
                 </div>
                 
-                <Input
+                <DemoRestrictedInput
                   type="date"
                   value={newTask.dueDate}
                   onChange={(e) => setNewTask({...newTask, dueDate: e.target.value})}
@@ -480,7 +485,7 @@ const Tasks = () => {
           {/* Smart Auto Prioritization Button */}
           {tasks.length >= 2 && (
             <div className="flex flex-col gap-2">
-              <Button
+              <DemoRestrictedButton
                 onClick={smartPrioritizeTasks}
                 disabled={isPrioritizing}
                 className="bg-purple-600 hover:bg-purple-700 text-white shadow-lg"
@@ -496,7 +501,7 @@ const Tasks = () => {
                     Smart Auto Prioritize
                   </>
                 )}
-              </Button>
+              </DemoRestrictedButton>
               {!lastPrioritized && (
                 <p className="text-xs text-muted-foreground text-center max-w-48">
                   AI analyzes deadlines, priority, and impact to reorder your tasks optimally

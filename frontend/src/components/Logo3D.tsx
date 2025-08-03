@@ -55,7 +55,7 @@ const Logo3D: React.FC<Logo3DProps> = ({
         transformStyle: 'preserve-3d'
       }}
       onClick={onClick}
-      whileHover={animated && variant !== 'navbar' ? {
+      whileHover={animated && variant !== 'navbar' && variant !== 'sidebar' ? {
         scale: 1.05,
         rotateY: 5,
         rotateX: 2
@@ -64,17 +64,17 @@ const Logo3D: React.FC<Logo3DProps> = ({
       {/* 3D Logo Container */}
       <motion.div
         className={`${sizes[size].container} relative`}
-        animate={animated ? (variant === 'navbar' ? {
-          y: [-2, 2, -2], // More visible floating for navbar
-          rotateY: [0, 15, 0, -15, 0], // More visible Y rotation for navbar
+        animate={animated ? (variant === 'navbar' || variant === 'sidebar' ? {
+          y: [-2, 2, -2], // More visible floating for navbar/sidebar
+          rotateY: [0, 15, 0, -15, 0], // More visible Y rotation for navbar/sidebar
           rotateX: [0, 5, 0, -5, 0], // More visible tilt
         } : {
           y: [-2, 2, -2],
-          rotateY: [0, 360], // Full rotation for non-navbar
+          rotateY: [0, 360], // Full rotation for non-navbar/sidebar
           rotateX: [0, 10, 0, -10, 0],
         }) : {}}
-        transition={animated ? (variant === 'navbar' ? {
-          duration: 4, // Faster, more visible animation for navbar
+        transition={animated ? (variant === 'navbar' || variant === 'sidebar' ? {
+          duration: 4, // Faster, more visible animation for navbar/sidebar
           repeat: Infinity,
           ease: "easeInOut",
           times: [0, 0.25, 0.5, 0.75, 1]
@@ -96,13 +96,13 @@ const Logo3D: React.FC<Logo3DProps> = ({
             filter: 'drop-shadow(0 10px 20px rgba(0,0,0,0.3))',
             boxShadow: '0 0 30px rgba(249, 115, 22, 0.4), inset 0 0 20px rgba(255, 255, 255, 0.2)'
           }}
-          animate={animated ? (variant === 'navbar' ? {
-            rotateZ: [0, 30, 0, -30, 0], // More visible rotation for navbar
+          animate={animated ? (variant === 'navbar' || variant === 'sidebar' ? {
+            rotateZ: [0, 30, 0, -30, 0], // More visible rotation for navbar/sidebar
           } : {
             rotateZ: [0, 360], // Full rotation for other variants
           }) : {}}
-          transition={animated ? (variant === 'navbar' ? {
-            duration: 5, // Moderate speed for navbar
+          transition={animated ? (variant === 'navbar' || variant === 'sidebar' ? {
+            duration: 5, // Moderate speed for navbar/sidebar
             repeat: Infinity,
             ease: "easeInOut"
           } : {
@@ -167,15 +167,15 @@ const Logo3D: React.FC<Logo3DProps> = ({
             
             {/* Central Target Icon */}
             <motion.div
-              animate={animated ? (variant === 'navbar' ? {
-                rotateZ: [0, 45, 0, -45, 0], // More visible rotation for navbar
-                scale: [1, 1.1, 1], // Subtle scale for navbar
+              animate={animated ? (variant === 'navbar' || variant === 'sidebar' ? {
+                rotateZ: [0, 45, 0, -45, 0], // More visible rotation for navbar/sidebar
+                scale: [1, 1.1, 1], // Subtle scale for navbar/sidebar
               } : {
                 rotateZ: [0, 360], // Full rotation for others
                 scale: [1, 1.1, 1],
               }) : {}}
-              transition={animated ? (variant === 'navbar' ? {
-                duration: 4, // Faster for navbar
+              transition={animated ? (variant === 'navbar' || variant === 'sidebar' ? {
+                duration: 4, // Faster for navbar/sidebar
                 repeat: Infinity,
                 ease: "easeInOut"
               } : {
@@ -290,11 +290,11 @@ const Logo3D: React.FC<Logo3DProps> = ({
         >
           <motion.span
             className={`font-bold text-orange-500 dark:text-white ${sizes[size].text}`}
-            whileHover={animated && variant !== 'navbar' ? { 
+            whileHover={animated && variant !== 'navbar' && variant !== 'sidebar' ? { 
               scale: 1.05
             } : {}}
             transition={{ duration: 0.2 }}
-            animate={variant === 'navbar' ? {} : {}} // No animation for navbar text
+            animate={variant === 'navbar' || variant === 'sidebar' ? {} : {}} // No animation for navbar/sidebar text
           >
             TaskTuner
           </motion.span>

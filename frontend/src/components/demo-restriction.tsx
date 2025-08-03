@@ -140,6 +140,7 @@ interface DemoRestrictedTextareaProps {
   placeholder?: string
   className?: string
   disabled?: boolean
+  rows?: number
 }
 
 export const DemoRestrictedTextarea: React.FC<DemoRestrictedTextareaProps> = ({
@@ -148,6 +149,7 @@ export const DemoRestrictedTextarea: React.FC<DemoRestrictedTextareaProps> = ({
   placeholder,
   className,
   disabled = false,
+  rows,
   ...props
 }) => {
   const { isDemoMode, showDemoRestriction } = useDemoMode()
@@ -165,6 +167,7 @@ export const DemoRestrictedTextarea: React.FC<DemoRestrictedTextareaProps> = ({
       placeholder={placeholder}
       className={className}
       disabled={disabled || isDemoMode}
+      rows={rows}
       onFocus={handleFocus}
       {...props}
     />

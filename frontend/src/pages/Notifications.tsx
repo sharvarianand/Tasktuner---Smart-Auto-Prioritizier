@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { DemoRestrictionBanner, DemoRestrictedButton } from "@/components/demo-restriction"
 import { 
   Bell, 
   CheckCircle, 
@@ -149,7 +150,10 @@ const Notifications = () => {
 
   return (
     <DashboardLayout title="Notifications">
-      <div className="p-6 space-y-6">
+      <div className="p-6 space-y-6 relative z-10">
+        {/* Demo Restriction Banner */}
+        <DemoRestrictionBanner />
+        
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -165,14 +169,14 @@ const Notifications = () => {
           
           <div className="flex gap-2">
             {unreadCount > 0 && (
-              <Button variant="outline" onClick={markAllAsRead}>
+              <DemoRestrictedButton variant="outline" onClick={markAllAsRead}>
                 Mark All Read
-              </Button>
+              </DemoRestrictedButton>
             )}
-            <Button variant="outline" onClick={clearAll}>
+            <DemoRestrictedButton variant="outline" onClick={clearAll}>
               <Trash2 className="mr-2 h-4 w-4" />
               Clear All
-            </Button>
+            </DemoRestrictedButton>
           </div>
         </motion.div>
 

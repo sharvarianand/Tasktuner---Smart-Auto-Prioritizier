@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Slider } from "@/components/ui/slider"
 import { Badge } from "@/components/ui/badge"
+import { DemoRestrictedButton } from "@/components/demo-restriction"
 import {
   Dialog,
   DialogContent,
@@ -46,9 +47,10 @@ interface FocusSession {
 
 interface FocusModeProps {
   onNavigateToFocus?: () => void
+  isDemo?: boolean
 }
 
-export function FocusMode({ onNavigateToFocus }: FocusModeProps) {
+export function FocusMode({ onNavigateToFocus, isDemo = false }: FocusModeProps) {
   const [isActive, setIsActive] = useState(false)
   const [isPaused, setIsPaused] = useState(false)
   const [time, setTime] = useState(0) // in seconds
@@ -219,9 +221,14 @@ export function FocusMode({ onNavigateToFocus }: FocusModeProps) {
           
           <Dialog>
             <DialogTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
+              <DemoRestrictedButton 
+                variant="ghost" 
+                size="icon" 
+                className="h-8 w-8"
+                allowInDemo={false}
+              >
                 <Settings className="h-4 w-4" />
-              </Button>
+              </DemoRestrictedButton>
             </DialogTrigger>
             <DialogContent className="bg-popover border-border">
               <DialogHeader>
@@ -349,6 +356,12 @@ export function FocusMode({ onNavigateToFocus }: FocusModeProps) {
           
           {/* Status Badges */}
           <div className="flex justify-center space-x-2">
+            {isDemo && (
+              <Badge variant="outline" className="text-muted-foreground border-muted-foreground/50">
+                <Lock className="h-3 w-3 mr-1" />
+                Demo Mode
+              </Badge>
+            )}
             {isActive && (
               <Badge variant="default" className="animate-pulse">
                 {isPaused ? "Paused" : "Focusing"}
@@ -372,18 +385,30 @@ export function FocusMode({ onNavigateToFocus }: FocusModeProps) {
         {/* Controls */}
         <div className="flex justify-center space-x-3">
           {!isActive ? (
-            <Button onClick={startTimer} className="bg-primary text-primary-foreground hover:bg-primary/90">
+            <DemoRestrictedButton 
+              onClick={startTimer} 
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
+              allowInDemo={false}
+            >
               <Play className="h-4 w-4 mr-2" />
               {lockApp ? "Start in Full Mode" : "Start Focus"}
-            </Button>
+            </DemoRestrictedButton>
           ) : (
             <>
-              <Button onClick={pauseTimer} variant="outline">
+              <DemoRestrictedButton 
+                onClick={pauseTimer} 
+                variant="outline"
+                allowInDemo={false}
+              >
                 {isPaused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
-              </Button>
-              <Button onClick={stopTimer} variant="destructive">
+              </DemoRestrictedButton>
+              <DemoRestrictedButton 
+                onClick={stopTimer} 
+                variant="destructive"
+                allowInDemo={false}
+              >
                 <Square className="h-4 w-4" />
-              </Button>
+              </DemoRestrictedButton>
             </>
           )}
         </div>
@@ -391,15 +416,16 @@ export function FocusMode({ onNavigateToFocus }: FocusModeProps) {
         {/* Full Focus Mode Link */}
         {onNavigateToFocus && (
           <div className="text-center">
-            <Button 
+            <DemoRestrictedButton 
               variant="ghost" 
               size="sm" 
               onClick={onNavigateToFocus}
               className="text-muted-foreground hover:text-card-foreground"
+              allowInDemo={false}
             >
               <Target className="h-3 w-3 mr-1" />
               {isActive && lockApp ? "Unlock in Full Mode" : "Full Focus Mode"}
-            </Button>
+            </DemoRestrictedButton>
           </div>
         )}
 
