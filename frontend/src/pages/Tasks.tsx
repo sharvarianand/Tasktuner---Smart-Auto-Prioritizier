@@ -47,10 +47,13 @@ import {
   Zap,
   Edit,
   Save,
-  X
+  X,
+  CheckSquare
 } from "lucide-react"
 import { toast } from "sonner"
 import { taskApi } from "@/lib/api"
+import { useUser } from "@clerk/clerk-react"
+import { useDemo } from "@/contexts/DemoContext"
 
 interface Task {
   id: string
@@ -75,6 +78,12 @@ interface UserStats {
 }
 
 const Tasks = () => {
+  const { user } = useUser()
+  const { isDemo } = useDemo()
+  
+  // Get user's name for personalization
+  const userName = user?.firstName || user?.username || user?.emailAddresses?.[0]?.emailAddress?.split('@')[0] || 'Champion'
+  
   const [tasks, setTasks] = useState<Task[]>([])
   const [userStats, setUserStats] = useState<UserStats>({
     tasksCompleted: 0,
@@ -336,6 +345,31 @@ const Tasks = () => {
       <div className="p-6 space-y-6 relative z-10">
         {/* Demo Restriction Banner */}
         <DemoRestrictionBanner />
+        
+        {/* Personalized Welcome Message */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-xl p-4 border border-primary/20"
+        >
+          <div className="flex items-center space-x-3">
+            <CheckSquare className="h-6 w-6 text-primary" />
+            <div>
+              <h2 className="text-lg font-semibold text-foreground">
+                {isDemo ? "Demo Task Management" : `${userName}'s Task Hub`}
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                {isDemo 
+                  ? "Experience the power of AI-driven task management"
+                  : tasks.length > 0 
+                    ? `You have ${filteredTasks.length} active tasks. Time to get things done!`
+                    : "Ready to tackle your goals? Add your first task to get started!"
+                }
+              </p>
+            </div>
+          </div>
+        </motion.div>
         
         {/* Header Stats */}
         <motion.div

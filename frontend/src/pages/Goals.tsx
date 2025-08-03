@@ -34,6 +34,8 @@ import {
   Clock
 } from "lucide-react"
 import { toast } from "sonner"
+import { useUser } from "@clerk/clerk-react"
+import { useDemoMode } from "@/contexts/DemoContext"
 
 interface Goal {
   id: number
@@ -50,6 +52,12 @@ interface Goal {
 }
 
 const Goals = () => {
+  const { user } = useUser()
+  const { isDemo } = useDemoMode()
+  
+  // Get user's name for personalization
+  const userName = user?.firstName || user?.username || user?.emailAddresses?.[0]?.emailAddress?.split('@')[0] || 'Goal Crusher'
+  
   const [goals, setGoals] = useState<Goal[]>([
     {
       id: 1,
@@ -177,10 +185,35 @@ const Goals = () => {
         {/* Demo Restriction Banner */}
         <DemoRestrictionBanner />
         
+        {/* Personalized Welcome */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/50 dark:to-purple-950/50 rounded-xl p-6 border border-blue-200/50 dark:border-blue-800/50"
+        >
+          <div className="flex items-center space-x-3">
+            <Target className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+            <div>
+              <h2 className="text-xl font-bold text-foreground">
+                {isDemo ? "Goal Setting Demo" : `${userName}'s Goals Dashboard`}
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                {isDemo 
+                  ? "Explore powerful goal-setting and tracking features"
+                  : goals.length > 0 
+                    ? `Track your progress across ${goals.length} goals and turn dreams into achievements`
+                    : "Ready to set your first goal? Let's turn your aspirations into action plans!"
+                }
+              </p>
+            </div>
+          </div>
+        </motion.div>
+        
         {/* Header Stats */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
           className="grid grid-cols-1 md:grid-cols-4 gap-4"
         >
           <Card>

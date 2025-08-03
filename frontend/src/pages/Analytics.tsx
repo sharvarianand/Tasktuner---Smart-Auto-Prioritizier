@@ -29,8 +29,15 @@ import {
   Calendar,
   Zap
 } from "lucide-react"
+import { useUser } from "@clerk/clerk-react"
+import { useDemoMode } from "@/contexts/DemoContext"
 
 const Analytics = () => {
+  const { user } = useUser()
+  const { isDemo } = useDemoMode()
+  
+  // Get user's name for personalization
+  const userName = user?.firstName || user?.username || user?.emailAddresses?.[0]?.emailAddress?.split('@')[0] || 'Achiever'
   // Mock data for charts
   const weeklyData = [
     { day: 'Mon', completed: 8, total: 10 },
@@ -118,15 +125,20 @@ const Analytics = () => {
         {/* Demo Restriction Banner */}
         <DemoRestrictionBanner />
         
-        {/* Header */}
+        {/* Personalized Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="text-center"
         >
-          <h2 className="text-3xl font-bold mb-2">Your Productivity Journey</h2>
+          <h2 className="text-3xl font-bold mb-2">
+            {isDemo ? "Analytics Demo" : `${userName}'s Productivity Journey`}
+          </h2>
           <p className="text-muted-foreground">
-            Data-driven insights into your task completion habits
+            {isDemo 
+              ? "Preview comprehensive analytics and insights"
+              : "Data-driven insights into your task completion habits and growth patterns"
+            }
           </p>
         </motion.div>
 

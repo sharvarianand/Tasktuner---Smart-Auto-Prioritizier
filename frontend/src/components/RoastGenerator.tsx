@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { Flame, Zap, Target, Clock, RefreshCw, Volume2, VolumeX } from "lucide-react";
 import AuthButton from "@/components/AuthButton";
 import { useVoiceContext } from "@/contexts/VoiceContext";
+import { useUser } from "@clerk/clerk-react";
 
 const roasts = [
   {
@@ -47,6 +48,11 @@ const roasts = [
 ];
 
 const RoastGenerator = () => {
+  const { user } = useUser()
+  
+  // Get user's first name for personalized roasts
+  const userName = user?.firstName || 'Champion'
+  
   const [currentRoast, setCurrentRoast] = useState(roasts[0]);
   const [isAnimating, setIsAnimating] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -207,6 +213,18 @@ const RoastGenerator = () => {
 
   return (
     <div className="max-w-2xl mx-auto">
+      {/* Personalized Header */}
+      {user && (
+        <div className="text-center mb-6">
+          <h3 className="text-lg font-semibold text-foreground mb-2">
+            Ready for some tough love, {userName}? 💪
+          </h3>
+          <p className="text-sm text-muted-foreground">
+            Get the motivation you need to stop procrastinating and start achieving
+          </p>
+        </div>
+      )}
+      
       <motion.div
         key={currentRoast.id}
         initial={{ opacity: 0, y: 20, scale: 0.95 }}

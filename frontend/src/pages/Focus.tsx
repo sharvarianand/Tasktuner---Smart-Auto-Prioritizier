@@ -23,6 +23,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useDemoMode } from "@/contexts/DemoContext";
 import { DemoRestrictionBanner, DemoRestrictedButton } from "@/components/demo-restriction";
 import { useTheme } from "@/components/theme-provider";
+import { useUser } from "@clerk/clerk-react";
 import LiveBackground from "@/components/LiveBackground";
 import { toast } from "sonner";
 
@@ -68,6 +69,11 @@ const Focus = () => {
   const location = useLocation();
   const { isDemoMode } = useDemoMode();
   const { theme } = useTheme();
+  const { user: clerkUser } = useUser();
+  
+  // Get user's name for personalization
+  const userName = clerkUser?.firstName || clerkUser?.username || clerkUser?.emailAddresses?.[0]?.emailAddress?.split('@')[0] || 'Champion'
+  
   const [selectedTask, setSelectedTask] = useState(null);
   const [tasks, setTasks] = useState(mockTasks);
   const [duration, setDuration] = useState([25]); // Pomodoro default
@@ -79,7 +85,6 @@ const Focus = () => {
   const [focusLocked, setFocusLocked] = useState(false);
   const [currentSession, setCurrentSession] = useState(null);
   const intervalRef = useRef(null);
-  const [user, setUser] = useState(mockUser);
 
   useEffect(() => {
     if (isActive && !isPaused && timeRemaining > 0) {
@@ -292,11 +297,18 @@ const Focus = () => {
               <div>
                 <h1 className={`text-2xl lg:text-3xl font-bold ${
                   theme === 'dark' ? 'text-white' : 'text-slate-800'
-                }`}>Focus Mode</h1>
-                <p className={`text-sm lg:text-base ${
-                  theme === 'dark' ? 'text-purple-200' : 'text-slate-600'
                 }`}>
-                  {user?.full_name?.split(' ')[0]}, time to get in the zone and get roasted by productivity!
+                  {isDemoMode ? "Focus Mode Demo" : `${userName}'s Focus Zone`}
+                </h1>
+                <p className={`text-sm ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+                }`}>
+                  {isDemoMode 
+                    ? "Experience deep focus with TaskTuner" 
+                    : isActive 
+                      ? "Deep focus session in progress" 
+                      : "Ready to enter deep focus mode?"
+                  }
                 </p>
               </div>
             </div>

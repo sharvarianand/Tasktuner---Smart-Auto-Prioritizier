@@ -20,6 +20,8 @@ import {
 } from "lucide-react"
 import { useUserData } from "@/hooks/useUserData"
 import { DemoRestrictionBanner } from "@/components/demo-restriction"
+import { useUser } from "@clerk/clerk-react"
+import { useDemoMode } from "@/contexts/DemoContext"
 
 interface LeaderboardUser {
   id: number
@@ -35,6 +37,14 @@ interface LeaderboardUser {
 
 const Leaderboard = () => {
   const { leaderboard } = useUserData()
+  const { user } = useUser()
+  const { isDemo } = useDemoMode()
+  
+  // Get user's name for personalization
+  const userName = user?.firstName || user?.username || user?.emailAddresses?.[0]?.emailAddress?.split('@')[0] || 'Champion'
+  
+  // Find current user in leaderboard
+  const currentUserEntry = leaderboard.find(entry => entry.name === (user?.firstName || user?.username || 'You'))
 
   const globalLeaderboard: LeaderboardUser[] = leaderboard
   const friendsLeaderboard: LeaderboardUser[] = leaderboard.slice(0, 3) // Show top 3 for friends
@@ -101,15 +111,20 @@ const Leaderboard = () => {
     <DashboardLayout title="Leaderboard">
       <DemoRestrictionBanner />
       <div className="p-6 space-y-6 relative z-10">
-        {/* Header */}
+        {/* Personalized Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="text-center"
         >
-          <h2 className="text-3xl font-bold mb-2">Productivity Champions</h2>
+          <h2 className="text-3xl font-bold mb-2">
+            {isDemo ? "Leaderboard Demo" : "Productivity Champions"}
+          </h2>
           <p className="text-muted-foreground">
-            See how you stack up against other productivity warriors
+            {isDemo 
+              ? "See how competitive productivity tracking works"
+              : `See how ${userName} stacks up against other productivity warriors worldwide`
+            }
           </p>
         </motion.div>
 
@@ -125,29 +140,42 @@ const Leaderboard = () => {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <Avatar className="h-16 w-16 border-2 border-white/20">
-                    <AvatarImage src="/api/placeholder/64/64" />
-                    <AvatarFallback>YU</AvatarFallback>
+                    <AvatarImage src={user?.imageUrl} />
+                    <AvatarFallback>
+                      {user?.firstName?.charAt(0).toUpperCase() || 'U'}
+                      {user?.lastName?.charAt(0).toUpperCase() || user?.username?.charAt(1).toUpperCase() || 'U'}
+                    </AvatarFallback>
                   </Avatar>
                   <div>
-                    <h3 className="text-xl font-bold">Your Rank: #12</h3>
-                    <p className="text-white/80">Rising Star ⭐</p>
+                    <h3 className="text-xl font-bold">
+                      {isDemo ? "Your Demo Rank: #5" : `${userName}'s Rank: #${currentUserEntry?.rank || 5}`}
+                    </h3>
+                    <p className="text-white/80">{currentUserEntry?.badge || "Rising Star ⭐"}</p>
                     <div className="flex items-center gap-2 mt-1">
                       <TrendingUp className="h-4 w-4" />
-                      <span className="text-sm">+3 positions this week</span>
+                      <span className="text-sm">
+                        {isDemo ? "Demo mode progress" : "+3 positions this week"}
+                      </span>
                     </div>
                   </div>
                 </div>
                 
                 <div className="text-right">
-                  <div className="text-3xl font-bold">2,340</div>
+                  <div className="text-3xl font-bold">
+                    {isDemo ? "2,340" : (currentUserEntry?.xp || 0).toLocaleString()}
+                  </div>
                   <div className="text-white/80">Total XP</div>
                   <div className="flex items-center gap-4 mt-2 text-sm">
                     <div>
-                      <div className="font-semibold">8</div>
+                      <div className="font-semibold">
+                        {isDemo ? "8" : currentUserEntry?.streak || 0}
+                      </div>
                       <div className="text-white/80">Streak</div>
                     </div>
                     <div>
-                      <div className="font-semibold">89</div>
+                      <div className="font-semibold">
+                        {isDemo ? "89" : currentUserEntry?.tasksCompleted || 0}
+                      </div>
                       <div className="text-white/80">Tasks</div>
                     </div>
                   </div>

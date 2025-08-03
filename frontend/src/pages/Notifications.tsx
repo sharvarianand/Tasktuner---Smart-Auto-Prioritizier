@@ -18,6 +18,8 @@ import {
   Volume2
 } from "lucide-react"
 import { toast } from "sonner"
+import { useUser } from "@clerk/clerk-react"
+import { useDemoMode } from "@/contexts/DemoContext"
 
 interface Notification {
   id: number
@@ -30,6 +32,12 @@ interface Notification {
 }
 
 const Notifications = () => {
+  const { user } = useUser()
+  const { isDemo } = useDemoMode()
+  
+  // Get user's name for personalization
+  const userName = user?.firstName || user?.username || user?.emailAddresses?.[0]?.emailAddress?.split('@')[0] || 'Procrastinator'
+  
   const [notifications, setNotifications] = useState<Notification[]>([
     {
       id: 1,
@@ -154,16 +162,23 @@ const Notifications = () => {
         {/* Demo Restriction Banner */}
         <DemoRestrictionBanner />
         
-        {/* Header */}
+        {/* Personalized Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="flex items-center justify-between"
         >
           <div>
-            <h2 className="text-3xl font-bold">Notifications</h2>
+            <h2 className="text-3xl font-bold">
+              {isDemo ? "Notifications Demo" : `${userName}'s Notifications`}
+            </h2>
             <p className="text-muted-foreground">
-              {unreadCount > 0 ? `${unreadCount} unread notifications` : "All caught up!"}
+              {isDemo 
+                ? "Experience smart notifications and roasts"
+                : unreadCount > 0 
+                  ? `${unreadCount} unread notifications waiting for your attention`
+                  : "All caught up! Your productivity game is strong 💪"
+              }
             </p>
           </div>
           

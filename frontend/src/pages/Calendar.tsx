@@ -15,8 +15,16 @@ import {
   ExternalLink
 } from "lucide-react"
 import { useState } from "react"
+import { useUser } from "@clerk/clerk-react"
+import { useDemoMode } from "@/contexts/DemoContext"
 
 const Calendar = () => {
+  const { user } = useUser()
+  const { isDemo } = useDemoMode()
+  
+  // Get user's name for personalization
+  const userName = user?.firstName || user?.username || user?.emailAddresses?.[0]?.emailAddress?.split('@')[0] || 'Scheduler'
+  
   const [currentDate, setCurrentDate] = useState(new Date())
   const [view, setView] = useState<'week' | 'month'>('week')
 
@@ -95,8 +103,15 @@ const Calendar = () => {
           className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between"
         >
           <div>
-            <h2 className="text-2xl font-bold">Your Schedule</h2>
-            <p className="text-muted-foreground">{formatDate(currentDate)}</p>
+            <h2 className="text-2xl font-bold">
+              {isDemo ? "Calendar Demo" : `${userName}'s Schedule`}
+            </h2>
+            <p className="text-muted-foreground">
+              {isDemo 
+                ? "Experience smart calendar integration and scheduling"
+                : `${formatDate(currentDate)} - Stay organized and on track`
+              }
+            </p>
           </div>
           
           <div className="flex items-center gap-2">

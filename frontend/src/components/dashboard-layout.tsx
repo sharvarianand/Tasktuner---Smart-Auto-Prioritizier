@@ -9,6 +9,7 @@ import { ThemeToggle } from "@/components/theme-toggle"
 import { Badge } from "@/components/ui/badge"
 import { useUser, UserButton } from "@clerk/clerk-react"
 import LiveBackground from "@/components/LiveBackground"
+import { useVoiceContext } from "@/contexts/VoiceContext"
 
 interface DashboardLayoutProps {
   children: React.ReactNode
@@ -16,9 +17,9 @@ interface DashboardLayoutProps {
 }
 
 export function DashboardLayout({ children, title }: DashboardLayoutProps) {
-  const [voiceEnabled, setVoiceEnabled] = useState(true)
   const [notifications] = useState(3)
   const { user } = useUser()
+  const { settings, toggleVoice } = useVoiceContext()
 
   return (
     <div className="min-h-screen flex w-full">
@@ -53,10 +54,11 @@ export function DashboardLayout({ children, title }: DashboardLayoutProps) {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => setVoiceEnabled(!voiceEnabled)}
-              className={`${voiceEnabled ? "text-primary" : "text-muted-foreground"} hover:text-foreground relative z-30`}
+              onClick={toggleVoice}
+              className={`${settings.enabled ? "text-primary" : "text-muted-foreground"} hover:text-foreground relative z-30`}
+              title={settings.enabled ? "Voice enabled - Click to disable" : "Voice disabled - Click to enable"}
             >
-              {voiceEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
+              {settings.enabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
             </Button>
 
             {/* Notifications */}
@@ -69,9 +71,14 @@ export function DashboardLayout({ children, title }: DashboardLayoutProps) {
             {/* User Menu with Clerk */}
             <div className="flex items-center space-x-2 relative z-30">
               {user && (
-                <span className="text-sm text-muted-foreground hidden sm:inline">
-                  {user.firstName || user.username || 'User'}
-                </span>
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm text-muted-foreground hidden md:inline">
+                    Welcome back, {user.firstName || user.username || 'User'}!
+                  </span>
+                  <span className="text-sm text-muted-foreground md:hidden">
+                    {user.firstName || user.username || 'User'}
+                  </span>
+                </div>
               )}
               <UserButton 
                 afterSignOutUrl="/"

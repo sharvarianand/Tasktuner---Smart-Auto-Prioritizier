@@ -41,11 +41,16 @@ import {
   Sun
 } from "lucide-react"
 import { useTheme } from "@/components/theme-provider"
+import { useUser } from "@clerk/clerk-react"
 import { toast } from "sonner"
 
 const Settings = () => {
   const { theme, setTheme } = useTheme()
   const { isDemoMode } = useDemoMode()
+  const { user } = useUser()
+  
+  // Get user's name for personalization
+  const userName = user?.firstName || user?.username || user?.emailAddresses?.[0]?.emailAddress?.split('@')[0] || 'User'
   
   const [settings, setSettings] = useState({
     notifications: {
@@ -101,14 +106,19 @@ const Settings = () => {
     <DashboardLayout title="Settings">
       <DemoRestrictionBanner />
       <div className="p-6 space-y-6 relative z-10">
-        {/* Header */}
+        {/* Personalized Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <h2 className="text-3xl font-bold mb-2">Settings</h2>
+          <h2 className="text-3xl font-bold mb-2">
+            {isDemoMode ? "Demo Settings" : `${userName}'s Settings`}
+          </h2>
           <p className="text-muted-foreground">
-            Customize your TaskTuner experience
+            {isDemoMode 
+              ? "Preview customization options in demo mode"
+              : "Personalize your TaskTuner experience to match your workflow"
+            }
           </p>
         </motion.div>
 

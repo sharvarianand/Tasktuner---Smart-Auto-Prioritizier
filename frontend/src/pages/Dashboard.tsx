@@ -1,5 +1,4 @@
-
-import React, { useEffect } from "react"
+import React, { useEffect, useState } from "react"
 import { motion } from "framer-motion"
 import { DashboardLayout } from "@/components/dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -15,7 +14,8 @@ import {
   TrendingUp, 
   Calendar,
   Plus,
-  Zap
+  Zap,
+  RefreshCw
 } from "lucide-react"
 import { FocusMode } from "@/components/focus-mode"
 import { DemoRestrictionBanner, DemoRestrictedButton } from "@/components/demo-restriction"
@@ -30,6 +30,28 @@ const Dashboard = () => {
   const { userData, isLoadingUserData, isNewUser } = useUserData();
   const { settings } = useVoiceContext();
   const navigate = useNavigate();
+  
+  // State for dynamic roast content
+  const [currentRoast, setCurrentRoast] = useState("Still scrolling through social media instead of your tasks? Your future self is facepalming right now.");
+  const [isGeneratingRoast, setIsGeneratingRoast] = useState(false);
+  
+  // Array of motivational roasts
+  const roasts = [
+    "Still scrolling through social media instead of your tasks? Your future self is facepalming right now.",
+    "Your procrastination level is legendary... unfortunately, that's not a good thing!",
+    "I've seen turtles move faster than your task completion rate!",
+    "Your to-do list called. It's filing a missing person report!",
+    "Netflix: 47 hours this week. Productivity: Still loading...",
+    "You're so good at avoiding work, you should get an award... but you'd probably procrastinate accepting it!",
+    "Your future self just sent a message: 'Thanks for nothing!' Stop disappointing them!",
+    "Procrastination is not a time management problem, it's an emotional regulation problem. Get therapy AND get to work!",
+    "You've mastered the art of being busy without being productive. Congratulations on your useless superpower!",
+    "Your productivity level is so low, it's causing a drought in the motivation department!",
+    "If excuses were currency, you'd be a billionaire. Too bad they're worthless!",
+    "Your tasks are aging like fine wine... except nobody wants expired productivity!",
+    "You've been 'starting tomorrow' for so many tomorrows that yesterday is confused!",
+    "Your motivation went on vacation and forgot to send a postcard!"
+  ];
   
   // Scroll to top when component mounts (especially important for demo mode)
   useEffect(() => {
@@ -49,30 +71,67 @@ const Dashboard = () => {
   // Function to speak roasts
   const speakRoast = (text: string) => {
     if ('speechSynthesis' in window && settings.enabled) {
-      // Cancel any existing speech
-      window.speechSynthesis.cancel();
-      
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.rate = settings.rate || 1;
-      utterance.pitch = settings.pitch || 1.1; // Slightly higher pitch for sass
-      utterance.volume = settings.volume || 0.8;
-      
-      // Try to find a good voice for roasting
-      const voices = window.speechSynthesis.getVoices();
-      const preferredVoice = voices.find(voice => 
-        voice.lang.startsWith('en') && (
-          voice.name.toLowerCase().includes('female') ||
-          voice.name.toLowerCase().includes('samantha') ||
-          voice.name.toLowerCase().includes('karen')
-        )
-      ) || voices.find(voice => voice.lang.startsWith('en')) || voices[0];
-      
-      if (preferredVoice) {
-        utterance.voice = preferredVoice;
+      // Cancel any ongoing speech
+      if (window.speechSynthesis.speaking) {
+        window.speechSynthesis.cancel();
       }
       
-      window.speechSynthesis.speak(utterance);
+      // Small delay to ensure cancellation completes
+      setTimeout(() => {
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.rate = settings.rate || 1;
+        utterance.pitch = settings.pitch || 1;
+        utterance.volume = settings.volume || 0.8;
+        
+        // Use selected voice from settings
+        const voices = window.speechSynthesis.getVoices();
+        if (settings.voice && voices.length > 0) {
+          const selectedVoice = voices.find(voice => voice.name === settings.voice);
+          if (selectedVoice) {
+            utterance.voice = selectedVoice;
+          }
+        }
+        
+        utterance.onerror = (event) => {
+          console.error('Speech error:', event.error);
+        };
+
+        try {
+          window.speechSynthesis.speak(utterance);
+        } catch (error) {
+          console.error('Failed to start speech:', error);
+        }
+      }, 100);
     }
+  };
+
+  // Function to generate a new roast
+  const generateNewRoast = () => {
+    setIsGeneratingRoast(true);
+    
+    // Stop any current speech
+    if (window.speechSynthesis.speaking) {
+      window.speechSynthesis.cancel();
+    }
+    
+    setTimeout(() => {
+      // Get a random roast that's different from the current one
+      let newRoast;
+      do {
+        newRoast = roasts[Math.floor(Math.random() * roasts.length)];
+      } while (newRoast === currentRoast && roasts.length > 1);
+      
+      setCurrentRoast(newRoast);
+      setIsGeneratingRoast(false);
+      
+      // Show toast notification
+      toast.info(newRoast, { duration: 5000 });
+      
+      // Speak the roast if voice is enabled
+      if (settings.enabled) {
+        setTimeout(() => speakRoast(newRoast), 200);
+      }
+    }, 800); // Slightly longer delay for better UX
   };
 
   // Dynamic stats based on user data
@@ -236,7 +295,7 @@ const Dashboard = () => {
             {/* Focus Mode */}
             <FocusMode onNavigateToFocus={() => navigateWithDemo('/focus')} isDemo={isDemo} />
             
-            {/* Motivation Corner */}
+            {/* Daily Roast with Dynamic Content */}
             <Card className="bg-gradient-to-br from-primary/20 to-secondary/20 border-primary/30">
               <CardHeader>
                 <CardTitle className="flex items-center text-card-foreground">
@@ -245,12 +304,19 @@ const Dashboard = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm italic text-muted-foreground mb-3">
-                  "Still scrolling through social media instead of your tasks? 
-                  Your future self is facepalming right now."
-                </p>
+                {/* Dynamic roast content */}
+                <motion.div
+                  key={currentRoast}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5 }}
+                >
+                  <p className="text-sm italic text-muted-foreground mb-3">
+                    "{currentRoast}"
+                  </p>
+                </motion.div>
                 
-                {/* Voice indicator and controls */}
+                {/* Voice indicator */}
                 <div className="flex items-center justify-between mb-3">
                   {settings.enabled && (
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -258,51 +324,28 @@ const Dashboard = () => {
                       Voice enabled - roasts will be spoken aloud
                     </div>
                   )}
-                  {!settings.enabled && (
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={() => navigateWithDemo('/roast')}
-                        className="text-xs p-1 h-auto"
-                        glow
-                      >
-                        Enable voice on /roast page
-                      </Button>
-                    </div>
-                  )}
                 </div>
+                
+                {/* Generate new roast button */}
                 <DemoRestrictedButton 
                   size="sm" 
                   variant="outline" 
                   className="mt-3 w-full border-primary text-primary hover:bg-primary hover:text-white"
+                  onClick={generateNewRoast}
+                  disabled={isGeneratingRoast}
                   glow
                   particles
-                  onClick={() => {
-                    const roasts = [
-                      "Your procrastination level is legendary... unfortunately, that's not a good thing!",
-                      "I've seen turtles move faster than your task completion rate!",
-                      "Your to-do list called. It's filing a missing person report!",
-                      "Netflix: 47 hours this week. Productivity: Still loading...",
-                      "You're so good at avoiding work, you should get an award... but you'd probably procrastinate accepting it!",
-                      "Your future self just sent a message: 'Thanks for nothing!' Stop disappointing them!",
-                      "Procrastination is not a time management problem, it's an emotional regulation problem. Get therapy AND get to work!",
-                      "You've mastered the art of being busy without being productive. Congratulations on your useless superpower!",
-                      "Your productivity level is so low, it's causing a drought in the motivation department!",
-                      "If excuses were currency, you'd be a billionaire. Too bad they're worthless!"
-                    ];
-                    const randomRoast = roasts[Math.floor(Math.random() * roasts.length)];
-                    
-                    // Show toast notification
-                    toast.info(randomRoast, { duration: 5000 });
-                    
-                    // Speak the roast if voice is enabled
-                    if (settings.enabled) {
-                      speakRoast(randomRoast);
-                    }
-                  }}
                 >
-                  Get Another Roast {settings.enabled ? '🔊' : ''}
+                  {isGeneratingRoast ? (
+                    <>
+                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                      Getting Fresh Roast...
+                    </>
+                  ) : (
+                    <>
+                      Get New Roast {settings.enabled ? '🔊' : ''}
+                    </>
+                  )}
                 </DemoRestrictedButton>
               </CardContent>
             </Card>
