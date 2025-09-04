@@ -1,5 +1,5 @@
 
-import { Calendar, CheckSquare, Target, BarChart3, Trophy, Settings, Bell, Home, Timer, User } from "lucide-react"
+import { Calendar, CheckSquare, Target, BarChart3, Trophy, Settings, Home, Timer, User } from "lucide-react"
 import { NavLink, useLocation } from "react-router-dom"
 import {
   Sidebar,
@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/sidebar"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import Logo3D from "@/components/Logo3D"
+
 import { useDemo } from "@/contexts/DemoContext"
 import { useUser } from "@clerk/clerk-react"
 
@@ -27,7 +28,6 @@ const items = [
   { title: "Goals", url: "/goals", icon: Target },
   { title: "Analytics", url: "/analytics", icon: BarChart3 },
   { title: "Leaderboard", url: "/leaderboard", icon: Trophy },
-  { title: "Notifications", url: "/notifications", icon: Bell },
   { title: "Settings", url: "/settings", icon: Settings },
 ]
 
@@ -58,22 +58,27 @@ export function AppSidebar() {
   return (
     <Sidebar className={`${isCollapsed ? "w-14" : "w-64"} bg-sidebar/80 backdrop-blur-sm border-r border-sidebar-border`} collapsible="icon">
       <SidebarHeader className="p-6 border-b border-sidebar-border">
-        {!isCollapsed && (
-          <Logo3D 
-            size="md" 
-            variant="sidebar" 
-            animated={true} 
-            showText={true}
-          />
-        )}
-        {isCollapsed && (
-          <Logo3D 
-            size="sm" 
-            variant="sidebar" 
-            animated={true} 
-            showText={false}
-          />
-        )}
+        <div className="flex items-center justify-between">
+          <div className="flex-1">
+            {!isCollapsed && (
+              <Logo3D 
+                size="md" 
+                variant="sidebar" 
+                animated={true} 
+                showText={true}
+              />
+            )}
+            {isCollapsed && (
+              <Logo3D 
+                size="sm" 
+                variant="sidebar" 
+                animated={true} 
+                showText={false}
+              />
+            )}
+          </div>
+
+        </div>
       </SidebarHeader>
 
       <SidebarContent className="bg-sidebar/80 backdrop-blur-sm">

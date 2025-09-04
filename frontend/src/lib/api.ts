@@ -56,7 +56,15 @@ export const taskApi = {
     priority: 'High' | 'Medium' | 'Low';
     category: 'Academic' | 'Personal' | 'Work';
     dueDate?: string;
+    startDate?: string;
+    startTime?: string;
+    endTime?: string;
     isDaily?: boolean;
+    reminders?: {
+      before?: number;
+      after?: number;
+    };
+    addToCalendar?: boolean;
   }) => {
     try {
       return await apiClient('/tasks', {
@@ -77,7 +85,15 @@ export const taskApi = {
     category?: 'Academic' | 'Personal' | 'Work';
     completed?: boolean;
     dueDate?: string;
+    startDate?: string;
+    startTime?: string;
+    endTime?: string;
     isDaily?: boolean;
+    reminders?: {
+      before?: number;
+      after?: number;
+    };
+    addToCalendar?: boolean;
   }) => {
     try {
       return await apiClient(`/tasks/${taskId}`, {
@@ -119,6 +135,42 @@ export const taskApi = {
     }
   },
 
+  // Get AI-prioritized tasks with insights
+  getPrioritizedTasks: async () => {
+    try {
+      return await apiClient('/tasks/prioritized');
+    } catch (error) {
+      console.error('Failed to get prioritized tasks:', error);
+      // Fallback to regular tasks
+      return {
+        prioritizedTasks: await taskApi.getTasks(),
+        insights: {
+          summary: "Using manual priority order",
+          recommendations: ["Enable AI prioritization for smarter task ordering"],
+          aiAnalysis: {
+            totalTasks: 0,
+            urgentTasks: 0,
+            overdueTasks: 0,
+            timeOptimizedTasks: 0,
+            focusRecommended: 0
+          }
+        }
+      };
+    }
+  },
+
+  // Force AI reprioritization
+  reprioritizeTasks: async () => {
+    try {
+      return await apiClient('/tasks/reprioritize', {
+        method: 'POST',
+      });
+    } catch (error) {
+      console.error('Failed to reprioritize tasks:', error);
+      throw error;
+    }
+  },
+
   // Smart Auto Prioritization using AI
   prioritizeTasks: async (tasks: any[]) => {
     try {
@@ -130,6 +182,18 @@ export const taskApi = {
       console.error('Failed to prioritize tasks:', error);
       // Return original tasks order on error
       return { prioritizedTasks: tasks };
+    }
+  },
+
+  // Clear all tasks for user
+  clearAllTasks: async () => {
+    try {
+      return await apiClient('/tasks/clear-all', {
+        method: 'DELETE',
+      });
+    } catch (error) {
+      console.error('Failed to clear all tasks:', error);
+      throw error;
     }
   },
 };

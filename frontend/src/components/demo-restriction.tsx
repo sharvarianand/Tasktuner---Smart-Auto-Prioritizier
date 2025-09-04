@@ -43,7 +43,7 @@ export const DemoRestrictionBanner: React.FC = () => {
 
 interface DemoRestrictedButtonProps {
   children: React.ReactNode
-  onClick?: () => void
+  onClick?: (e?: React.MouseEvent) => void
   className?: string
   variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link"
   size?: "default" | "sm" | "lg" | "icon"
@@ -67,12 +67,13 @@ export const DemoRestrictedButton: React.FC<DemoRestrictedButtonProps> = ({
 }) => {
   const { isDemoMode, showDemoRestriction } = useDemoMode()
 
-  const handleClick = () => {
+  const handleClick = (e: React.MouseEvent) => {
     if (isDemoMode && !allowInDemo) {
+      e?.stopPropagation();
       showDemoRestriction()
       return
     }
-    onClick?.()
+    onClick?.(e)
   }
 
   const isDisabled = disabled || (isDemoMode && !allowInDemo)

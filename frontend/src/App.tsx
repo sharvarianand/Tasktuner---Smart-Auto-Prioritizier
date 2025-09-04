@@ -8,6 +8,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { DemoProvider } from "@/contexts/DemoContext";
 import { VoiceProvider } from "@/contexts/VoiceContext";
+import { NotificationProvider } from "@/contexts/NotificationContext";
 import { ClerkProvider } from "@clerk/clerk-react";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
@@ -37,12 +38,13 @@ const App = () => (
   <ClerkProvider publishableKey={clerkPubKey}>
     <QueryClientProvider client={queryClient}>
       <ThemeProvider defaultTheme="light" storageKey="tasktuner-theme">
-        <VoiceProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <DemoProvider>
+        <NotificationProvider>
+          <VoiceProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
+                <DemoProvider>
                 <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/roast" element={<Roast />} />
@@ -120,6 +122,7 @@ const App = () => (
           </BrowserRouter>
         </TooltipProvider>
         </VoiceProvider>
+        </NotificationProvider>
       </ThemeProvider>
     </QueryClientProvider>
   </ClerkProvider>

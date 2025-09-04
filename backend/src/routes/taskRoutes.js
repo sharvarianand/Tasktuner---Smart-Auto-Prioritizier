@@ -10,8 +10,17 @@ const taskController = require('../controllers/taskController');
 // 📄 GET all tasks
 router.get('/', taskController.getTasks);
 
+// 🧠 GET AI-prioritized tasks
+router.get('/prioritized', taskController.getPrioritizedTasks);
+
+// 🔄 POST force AI reprioritization
+router.post('/reprioritize', taskController.reprioritizeTasks);
+
 // ➕ POST new task
 router.post('/', taskController.createTask);
+
+// 🗑️ DELETE all tasks for user
+router.delete('/clear-all', taskController.clearAllTasks);
 
 // 🔄 PUT update task by ID
 router.put('/:id', taskController.updateTask);

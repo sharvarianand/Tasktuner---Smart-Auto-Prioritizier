@@ -14,6 +14,7 @@ import {
 } from "@/components/demo-restriction"
 import { useDemoMode } from "@/contexts/DemoContext"
 import { CalendarSettings } from "@/components/CalendarSettings"
+import notificationService from "@/services/notificationService"
 import { 
   Select,
   SelectContent,
@@ -202,6 +203,30 @@ const Settings = () => {
                     />
                   </div>
                 ))}
+                
+                {/* Notification Permission */}
+                <div className="border-t pt-4">
+                  <Label className="text-base font-medium">Browser Notifications</Label>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Enable browser notifications to receive TaskTuner roasts
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={async () => {
+                      const permission = await notificationService.requestPermission()
+                      if (permission === 'granted') {
+                        toast.success("Notifications enabled! 🔔")
+                      } else if (permission === 'denied') {
+                        toast.error("Notifications blocked. Please enable in browser settings.")
+                      } else {
+                        toast.info("Notification permission pending...")
+                      }
+                    }}
+                  >
+                    🔔 Request Permission
+                  </Button>
+                </div>
               </CardContent>
             </Card>
 
@@ -254,6 +279,79 @@ const Settings = () => {
                       <SelectItem value="spicy">Spicy (Savage mode) 🔥</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+
+                {/* Test Roast Notifications */}
+                <div className="border-t pt-4">
+                  <Label className="text-base font-medium">Test Roast Notifications</Label>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Try out TaskTuner's signature roast notifications
+                  </p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-blue-600 border-blue-300 hover:bg-blue-50"
+                      onClick={() => {
+                        toast.success("Sending motivational roast! 💪")
+                        notificationService.showMotivationalRoast("Test Task")
+                      }}
+                    >
+                      💪 Motivation
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-orange-600 border-orange-300 hover:bg-orange-50"
+                      onClick={() => {
+                        toast.success("Calling out your procrastination! 😏")
+                        notificationService.showProcrastinationRoast("Test Task")
+                      }}
+                    >
+                      😏 Procrastination
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-green-600 border-green-300 hover:bg-green-50"
+                      onClick={() => {
+                        toast.success("Celebrating your completion! 🎉")
+                        notificationService.showCompletionRoast("Test Task", 50)
+                      }}
+                    >
+                      🎉 Completion
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-red-600 border-red-300 hover:bg-red-50"
+                      onClick={() => {
+                        toast.success("Sending overdue roast! 🔥")
+                        // Create a mock overdue task for testing
+                        const mockOverdueTask = {
+                          id: 'test-overdue',
+                          title: 'Test Overdue Task',
+                          dueDate: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Yesterday
+                          endTime: '12:00'
+                        }
+                        // Manually trigger overdue notification since it's normally automatic
+                        notificationService.showNotification(
+                          `⏰ "${mockOverdueTask.title}" is overdue!`,
+                          {
+                            body: "Procrastination level: Expert! 🥴 Time to adult... just a little bit! 👔",
+                            tag: 'overdue-test',
+                            requireInteraction: true,
+                            actions: [
+                              { action: 'complete', title: '✅ Mark Done' },
+                              { action: 'reschedule', title: '📅 Reschedule' }
+                            ]
+                          }
+                        )
+                      }}
+                    >
+                      🔥 Overdue
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
