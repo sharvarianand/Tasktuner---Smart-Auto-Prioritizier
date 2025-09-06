@@ -2,14 +2,40 @@ const API_BASE_URL = 'http://localhost:3001/api';
 
 // Get user ID from Clerk or session storage for demo
 const getUserId = () => {
-  // In a real app, this would come from Clerk authentication
-  // For now, we'll use a demo user ID
+  // Try to get user ID from Clerk authentication
+  if (typeof window !== 'undefined') {
+    // Check if we're in demo mode
+    const isDemoMode = sessionStorage.getItem('tasktuner-demo-mode') === 'true';
+    
+    if (isDemoMode) {
+      // Use a consistent demo user ID for demo mode
+      return 'demo-user-123';
+    }
+    
+    // For authenticated users, try to get from Clerk
+    // We'll use a more robust approach by checking for Clerk user
+    try {
+      // Check if Clerk is available and user is signed in
+      const clerkUser = (window as any).__clerk_user;
+      if (clerkUser && clerkUser.id) {
+        return clerkUser.id;
+      }
+    } catch (error) {
+      console.log('Clerk user not available, using fallback');
+    }
+    
+    // Fallback for authenticated users
+    return 'authenticated-user';
+  }
+  
   return 'demo-user-123';
 };
 
 // API client with authentication headers
 const apiClient = async (endpoint: string, options: RequestInit = {}) => {
   const userId = getUserId();
+  
+  console.log('🔑 Using user ID:', userId, 'for API call to:', endpoint);
   
   const config: RequestInit = {
     headers: {
@@ -194,6 +220,103 @@ export const taskApi = {
     } catch (error) {
       console.error('Failed to clear all tasks:', error);
       throw error;
+    }
+  },
+};
+
+// Goals API functions
+export const goalApi = {
+  // Get all goals for user
+  getGoals: async () => {
+    try {
+      return await apiClient('/goals');
+    } catch (error) {
+      console.error('Failed to get goals:', error);
+      return [];
+    }
+  },
+
+  // Create a new goal
+  createGoal: async (goalData: {
+    title: string;
+    description?: string;
+    targetDate?: string;
+    category?: string;
+    priority?: 'High' | 'Medium' | 'Low';
+  }) => {
+    try {
+      return await apiClient('/goals', {
+        method: 'POST',
+        body: JSON.stringify(goalData),
+      });
+    } catch (error) {
+      console.error('Failed to create goal:', error);
+      throw error;
+    }
+  },
+
+  // Update a goal
+  updateGoal: async (goalId: string, updates: any) => {
+    try {
+      return await apiClient(`/goals/${goalId}`, {
+        method: 'PUT',
+        body: JSON.stringify(updates),
+      });
+    } catch (error) {
+      console.error('Failed to update goal:', error);
+      throw error;
+    }
+  },
+
+  // Delete a goal
+  deleteGoal: async (goalId: string) => {
+    try {
+      return await apiClient(`/goals/${goalId}`, {
+        method: 'DELETE',
+      });
+    } catch (error) {
+      console.error('Failed to delete goal:', error);
+      throw error;
+    }
+  },
+
+  // Break down goal with AI
+  breakDownGoal: async (goalId: string) => {
+    try {
+      return await apiClient(`/goals/${goalId}/breakdown`, {
+        method: 'POST',
+      });
+    } catch (error) {
+      console.error('Failed to break down goal:', error);
+      throw error;
+    }
+  },
+
+  // Create tasks from goal breakdown
+  createTasksFromGoal: async (goalId: string) => {
+    try {
+      return await apiClient(`/goals/${goalId}/create-tasks`, {
+        method: 'POST',
+      });
+    } catch (error) {
+      console.error('Failed to create tasks from goal:', error);
+      throw error;
+    }
+  },
+
+  // Get goal statistics
+  getGoalStats: async () => {
+    try {
+      return await apiClient('/goals/stats');
+    } catch (error) {
+      console.error('Failed to get goal stats:', error);
+      return {
+        totalGoals: 0,
+        activeGoals: 0,
+        completedGoals: 0,
+        avgProgress: 0,
+        totalTasks: 0
+      };
     }
   },
 };

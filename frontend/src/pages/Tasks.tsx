@@ -81,6 +81,7 @@ interface Task {
   isDaily?: boolean
   completedDates?: string[]
   calendarEventId?: string
+  goalId?: string // ID of the goal this task belongs to
   reminders?: {
     before?: number // minutes before start
     after?: number  // minutes after end
@@ -1686,6 +1687,13 @@ const Tasks = () => {
                             <Badge key="daily" variant="outline" className="text-xs">
                               <CalendarIcon className="h-3 w-3 mr-1" />
                               Daily
+                            </Badge>
+                          )}
+                          
+                          {/* Goal Indicator */}
+                          {task.goalId && (
+                            <Badge key="goal" variant="secondary" className="text-xs bg-orange-100 text-orange-700 border-orange-200">
+                              🎯 From Goal
                             </Badge>
                           )}
                           

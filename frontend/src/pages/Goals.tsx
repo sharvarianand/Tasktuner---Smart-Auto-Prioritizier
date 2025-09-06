@@ -1,5 +1,5 @@
 
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import { motion } from "framer-motion"
 import { DashboardLayout } from "@/components/dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -28,17 +28,20 @@ import {
   CheckCircle, 
   Calendar,
   TrendingUp,
-  Zap,
   Brain,
   Trophy,
-  Clock
+  Clock,
+  Loader2,
+  Trash2,
+  Edit
 } from "lucide-react"
 import { toast } from "sonner"
 import { useUser } from "@clerk/clerk-react"
 import { useDemoMode } from "@/contexts/DemoContext"
+import { goalApi } from "@/lib/api"
 
 interface Goal {
-  id: number
+  id: string
   title: string
   description: string
   targetDate: string
@@ -47,8 +50,11 @@ interface Goal {
   subtasks: string[]
   totalTasks: number
   completedTasks: number
+  completedSubtasks?: number[]
   priority: 'High' | 'Medium' | 'Low'
   status: 'active' | 'completed' | 'paused'
+  createdAt: string
+  updatedAt: string
 }
 
 const Goals = () => {
@@ -58,62 +64,17 @@ const Goals = () => {
   // Get user's name for personalization
   const userName = user?.firstName || user?.username || user?.emailAddresses?.[0]?.emailAddress?.split('@')[0] || 'Goal Crusher'
   
-  const [goals, setGoals] = useState<Goal[]>([
-    {
-      id: 1,
-      title: "Master React Development",
-      description: "Become proficient in React, Next.js, and modern frontend development",
-      targetDate: "2024-06-01",
-      progress: 75,
-      category: "Learning",
-      subtasks: [
-        "Complete React fundamentals course",
-        "Build 3 portfolio projects", 
-        "Learn Next.js framework",
-        "Master state management"
-      ],
-      totalTasks: 12,
-      completedTasks: 9,
-      priority: "High",
-      status: "active"
-    },
-    {
-      id: 2,
-      title: "Get into Top Tier University",
-      description: "Prepare for and ace the entrance exams for computer science program",
-      targetDate: "2024-08-15",
-      progress: 45,
-      category: "Academic",
-      subtasks: [
-        "Complete math syllabus",
-        "Practice coding problems daily",
-        "Take mock tests weekly",
-        "Improve English scores"
-      ],
-      totalTasks: 20,
-      completedTasks: 9,
-      priority: "High", 
-      status: "active"
-    },
-    {
-      id: 3,
-      title: "Build Fitness Habit",
-      description: "Establish a consistent workout routine and improve overall health",
-      targetDate: "2024-04-01",
-      progress: 60,
-      category: "Health",
-      subtasks: [
-        "Join gym membership",
-        "Create workout schedule",
-        "Track daily nutrition", 
-        "Run 5k without stopping"
-      ],
-      totalTasks: 8,
-      completedTasks: 5,
-      priority: "Medium",
-      status: "active"
-    }
-  ])
+  const [goals, setGoals] = useState<Goal[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [isCreating, setIsCreating] = useState(false)
+  const [isBreakingDown, setIsBreakingDown] = useState<string | null>(null)
+  const [stats, setStats] = useState({
+    totalGoals: 0,
+    activeGoals: 0,
+    completedGoals: 0,
+    avgProgress: 0,
+    totalTasks: 0
+  })
 
   const [newGoal, setNewGoal] = useState({
     title: '',
@@ -123,34 +84,158 @@ const Goals = () => {
     priority: 'Medium' as Goal['priority']
   })
 
-  const addGoal = () => {
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+
+  // Load goals on component mount
+  useEffect(() => {
+    loadGoals()
+    loadStats()
+  }, [])
+
+  const loadGoals = async () => {
+    try {
+      setIsLoading(true)
+      const goalsData = await goalApi.getGoals()
+      setGoals(goalsData || [])
+    } catch (error) {
+      console.error('Failed to load goals:', error)
+      toast.error(`Failed to load goals: ${error.message}`)
+      setGoals([]) // Set empty array on error
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const loadStats = async () => {
+    try {
+      const statsData = await goalApi.getGoalStats()
+      setStats(statsData)
+    } catch (error) {
+      console.error('Failed to load stats:', error)
+    }
+  }
+
+  const addGoal = async () => {
     if (!newGoal.title.trim()) {
       toast.error("Goal title is required!")
       return
     }
 
-    const goal: Goal = {
-      id: Date.now(),
-      title: newGoal.title,
-      description: newGoal.description,
-      targetDate: newGoal.targetDate,
-      progress: 0,
-      category: newGoal.category,
-      subtasks: [],
-      totalTasks: 0,
-      completedTasks: 0,
-      priority: newGoal.priority,
-      status: 'active'
-    }
+    try {
+      setIsCreating(true)
+      
+      const createdGoal = await goalApi.createGoal({
+        title: newGoal.title,
+        description: newGoal.description,
+        targetDate: newGoal.targetDate,
+        category: newGoal.category,
+        priority: newGoal.priority
+      })
 
-    setGoals([goal, ...goals])
-    setNewGoal({ title: '', description: '', targetDate: '', category: '', priority: 'Medium' })
-    toast.success("Goal added! Now let's break it down into tasks 🎯")
+      // Refresh the goals list to ensure we have the latest data from the server
+      await loadGoals()
+      await loadStats()
+      
+      // Reset form and close dialog
+      setNewGoal({ title: '', description: '', targetDate: '', category: '', priority: 'Medium' })
+      setIsDialogOpen(false)
+      
+      toast.success("Goal saved successfully! Now let's break it down into tasks 🎯")
+    } catch (error) {
+      console.error('Failed to create goal:', error)
+      toast.error(`Failed to create goal: ${error.message}`)
+    } finally {
+      setIsCreating(false)
+    }
   }
 
-  const breakDownGoal = (goalId: number) => {
-    toast.success("AI is analyzing your goal... Breaking it down into actionable tasks! 🧠")
-    // This would call the backend AI service to break down the goal
+  const breakDownGoal = async (goalId: string) => {
+    try {
+      setIsBreakingDown(goalId)
+      toast.success("🧠 AI is analyzing your goal description and generating specific, actionable tasks...")
+      
+      const result = await goalApi.breakDownGoal(goalId)
+      
+      // Refresh the goals list to ensure we have the latest data from the server
+      await loadGoals()
+      await loadStats()
+      
+      toast.success(`🎯 Goal broken down into ${result.generatedTasks.length} specific tasks! Check the Key Milestones below.`)
+    } catch (error) {
+      console.error('Failed to break down goal:', error)
+      toast.error(`Failed to break down goal with AI: ${error.message}`)
+    } finally {
+      setIsBreakingDown(null)
+    }
+  }
+
+
+  const deleteGoal = async (goalId: string) => {
+    try {
+      await goalApi.deleteGoal(goalId)
+      
+      // Refresh the goals list to ensure we have the latest data from the server
+      await loadGoals()
+      await loadStats()
+      
+      toast.success("Goal deleted successfully")
+    } catch (error) {
+      console.error('Failed to delete goal:', error)
+      toast.error(`Failed to delete goal: ${error.message}`)
+    }
+  }
+
+  const markGoalComplete = async (goalId: string) => {
+    try {
+      await goalApi.updateGoal(goalId, { status: 'completed', progress: 100 })
+      
+      // Refresh the goals list to ensure we have the latest data from the server
+      await loadGoals()
+      await loadStats()
+      
+      toast.success("🎉 Goal marked as complete! Great job!")
+    } catch (error) {
+      console.error('Failed to mark goal as complete:', error)
+      toast.error(`Failed to mark goal as complete: ${error.message}`)
+    }
+  }
+
+  const toggleSubtask = async (goalId: string, subtaskIndex: number) => {
+    try {
+      const goal = goals.find(g => g.id === goalId)
+      if (!goal) return
+
+      const currentCompleted = goal.completedSubtasks || []
+      const isCompleted = currentCompleted.includes(subtaskIndex)
+      
+      let newCompleted: number[]
+      if (isCompleted) {
+        // Remove from completed list
+        newCompleted = currentCompleted.filter(idx => idx !== subtaskIndex)
+      } else {
+        // Add to completed list
+        newCompleted = [...currentCompleted, subtaskIndex]
+      }
+
+      // Calculate new progress
+      const newProgress = Math.round((newCompleted.length / goal.subtasks.length) * 100)
+      const newCompletedTasks = newCompleted.length
+
+      await goalApi.updateGoal(goalId, { 
+        completedSubtasks: newCompleted,
+        completedTasks: newCompletedTasks,
+        progress: newProgress
+      })
+      
+      // Refresh the goals list
+      await loadGoals()
+      await loadStats()
+      
+      toast.success(isCompleted ? "Task marked as incomplete" : "Task completed! 🎉")
+    } catch (error) {
+      console.error('Failed to toggle subtask:', error)
+      toast.error(`Failed to update task: ${error.message}`)
+    }
   }
 
   const getPriorityColor = (priority: string) => {
@@ -176,6 +261,11 @@ const Goals = () => {
     const target = new Date(targetDate)
     const diffTime = target.getTime() - today.getTime()
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    
+    // Handle past dates gracefully
+    if (diffDays < 0) {
+      return 0 // Show 0 days left for overdue goals
+    }
     return diffDays
   }
 
@@ -221,7 +311,7 @@ const Goals = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Active Goals</p>
-                  <p className="text-2xl font-bold">{goals.filter(g => g.status === 'active').length}</p>
+                  <p className="text-2xl font-bold">{stats.activeGoals}</p>
                 </div>
                 <Target className="h-8 w-8 text-primary" />
               </div>
@@ -233,7 +323,7 @@ const Goals = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Completed</p>
-                  <p className="text-2xl font-bold">{goals.filter(g => g.status === 'completed').length}</p>
+                  <p className="text-2xl font-bold">{stats.completedGoals}</p>
                 </div>
                 <Trophy className="h-8 w-8 text-green-500" />
               </div>
@@ -245,9 +335,7 @@ const Goals = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Avg Progress</p>
-                  <p className="text-2xl font-bold">
-                    {Math.round(goals.reduce((sum, g) => sum + g.progress, 0) / goals.length)}%
-                  </p>
+                  <p className="text-2xl font-bold">{stats.avgProgress}%</p>
                 </div>
                 <TrendingUp className="h-8 w-8 text-blue-500" />
               </div>
@@ -259,7 +347,7 @@ const Goals = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Total Tasks</p>
-                  <p className="text-2xl font-bold">{goals.reduce((sum, g) => sum + g.totalTasks, 0)}</p>
+                  <p className="text-2xl font-bold">{stats.totalTasks}</p>
                 </div>
                 <CheckCircle className="h-8 w-8 text-orange-500" />
               </div>
@@ -277,61 +365,56 @@ const Goals = () => {
           <div>
             <h2 className="text-2xl font-bold">Your Goals</h2>
             <p className="text-muted-foreground">Turn your dreams into actionable plans</p>
+            <button 
+              onClick={loadGoals}
+              className="text-sm text-blue-500 hover:text-blue-700 mt-2"
+            >
+              🔄 Refresh Goals
+            </button>
           </div>
           
-          <Dialog>
-            <DialogTrigger asChild>
-              <DemoRestrictedButton className="bg-primary text-primary-foreground shadow-glow hover:bg-primary/90">
-                <Plus className="mr-2 h-4 w-4" />
-                Add Goal
-              </DemoRestrictedButton>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Create New Goal</DialogTitle>
-                <DialogDescription>
-                  Set a meaningful goal and let AI help you achieve it
-                </DialogDescription>
-              </DialogHeader>
-              
-              <div className="space-y-4">
-                <DemoRestrictedInput
-                  placeholder="Goal title (e.g., Learn Machine Learning)"
-                  value={newGoal.title}
-                  onChange={(e) => setNewGoal({...newGoal, title: e.target.value})}
-                />
-                
-                <DemoRestrictedTextarea
-                  placeholder="Describe your goal in detail..."
-                  value={newGoal.description}
-                  onChange={(e) => setNewGoal({...newGoal, description: e.target.value})}
-                />
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <DemoRestrictedInput
-                    placeholder="Category (e.g., Learning, Health)"
-                    value={newGoal.category}
-                    onChange={(e) => setNewGoal({...newGoal, category: e.target.value})}
-                  />
-                  
-                  <DemoRestrictedInput
-                    type="date"
-                    value={newGoal.targetDate}
-                    onChange={(e) => setNewGoal({...newGoal, targetDate: e.target.value})}
-                  />
-                </div>
-                
-                <DemoRestrictedButton onClick={addGoal} className="w-full">
-                  Create Goal
+          {goals.length > 0 && (
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <DemoRestrictedButton 
+                  className="bg-primary text-primary-foreground shadow-glow hover:bg-primary/90"
+                  onClick={() => setIsDialogOpen(true)}
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Goal
                 </DemoRestrictedButton>
-              </div>
-            </DialogContent>
-          </Dialog>
+              </DialogTrigger>
+            </Dialog>
+          )}
         </motion.div>
+
 
         {/* Goals List */}
         <div className="grid gap-6">
-          {goals.map((goal, index) => (
+          {isLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin" />
+              <span className="ml-2">Loading goals...</span>
+            </div>
+          ) : goals.length === 0 ? (
+            <Card>
+              <CardContent className="pt-6">
+                <div className="text-center py-8">
+                  <Target className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">No goals yet</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Create your first goal and let AI help you achieve it!
+                  </p>
+                  <DemoRestrictedButton 
+                    onClick={() => setIsDialogOpen(true)}
+                  >
+                    Add Your First Goal
+                  </DemoRestrictedButton>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            goals.map((goal, index) => (
             <motion.div
               key={goal.id}
               initial={{ opacity: 0, y: 20 }}
@@ -346,9 +429,6 @@ const Goals = () => {
                         <CardTitle className="text-xl">{goal.title}</CardTitle>
                         <Badge variant={getPriorityColor(goal.priority)}>
                           {goal.priority}
-                        </Badge>
-                        <Badge variant={getStatusColor(goal.status)}>
-                          {goal.status}
                         </Badge>
                       </div>
                       <CardDescription className="text-base">
@@ -375,30 +455,45 @@ const Goals = () => {
                   
                   {/* Goal Details */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4 text-muted-foreground" />
-                      <span>Target: {new Date(goal.targetDate).toLocaleDateString()}</span>
-                    </div>
+                    {goal.targetDate && (
+                      <div className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-muted-foreground" />
+                        <span>Target: {new Date(goal.targetDate).toLocaleDateString()}</span>
+                      </div>
+                    )}
                     
-                    <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4 text-muted-foreground" />
-                      <span>{getDaysUntilTarget(goal.targetDate)} days left</span>
-                    </div>
+                    {goal.targetDate && (
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-muted-foreground" />
+                        <span>{getDaysUntilTarget(goal.targetDate)} days left</span>
+                      </div>
+                    )}
                     
                     <div className="flex items-center gap-2">
                       <Badge variant="outline">{goal.category}</Badge>
                     </div>
                   </div>
                   
-                  {/* Subtasks Preview */}
+                  {/* Subtasks */}
                   {goal.subtasks.length > 0 && (
                     <div>
                       <h4 className="font-medium mb-2">Key Milestones:</h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                        {goal.subtasks.slice(0, 4).map((subtask, idx) => (
+                        {goal.subtasks.map((subtask, idx) => (
                           <div key={idx} className="flex items-center gap-2 text-sm">
-                            <CheckCircle className="h-3 w-3 text-green-500" />
-                            <span>{subtask}</span>
+                            <button
+                              onClick={() => toggleSubtask(goal.id, idx)}
+                              className="flex items-center gap-2 hover:bg-gray-100 dark:hover:bg-gray-800 p-1 rounded transition-colors"
+                            >
+                              {goal.completedSubtasks && goal.completedSubtasks.includes(idx) ? (
+                                <CheckCircle className="h-3 w-3 text-green-500" />
+                              ) : (
+                                <div className="h-3 w-3 border-2 border-gray-300 dark:border-gray-600 rounded-full" />
+                              )}
+                              <span className={goal.completedSubtasks && goal.completedSubtasks.includes(idx) ? 'line-through text-gray-500' : ''}>
+                                {subtask}
+                              </span>
+                            </button>
                           </div>
                         ))}
                       </div>
@@ -407,48 +502,116 @@ const Goals = () => {
                   
                   {/* Actions */}
                   <div className="flex gap-2 pt-2">
+                    {/* Show Break Down button only if no subtasks exist */}
+                    {goal.subtasks.length === 0 ? (
+                      <DemoRestrictedButton 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => breakDownGoal(goal.id)}
+                        className="gap-2"
+                        disabled={isBreakingDown === goal.id}
+                      >
+                        {isBreakingDown === goal.id ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <Brain className="h-3 w-3" />
+                        )}
+                        {isBreakingDown === goal.id ? 'AI Analyzing...' : 'Break Down with AI'}
+                      </DemoRestrictedButton>
+                    ) : (
+                      /* Show Mark as Complete button if subtasks exist */
+                      <DemoRestrictedButton 
+                        variant="default" 
+                        size="sm"
+                        onClick={() => markGoalComplete(goal.id)}
+                        className="gap-2 bg-green-600 hover:bg-green-700"
+                      >
+                        <CheckCircle className="h-3 w-3" />
+                        Mark as Completed
+                      </DemoRestrictedButton>
+                    )}
+                    
                     <Button 
                       variant="outline" 
-                      size="sm"
-                      onClick={() => breakDownGoal(goal.id)}
+                      size="sm" 
                       className="gap-2"
+                      onClick={() => deleteGoal(goal.id)}
                     >
-                      <Brain className="h-3 w-3" />
-                      Break Down with AI
-                    </Button>
-                    <Button variant="outline" size="sm" className="gap-2">
-                      <Zap className="h-3 w-3" />
-                      Create Tasks
-                    </Button>
-                    <Button variant="outline" size="sm" className="gap-2">
-                      <TrendingUp className="h-3 w-3" />
-                      View Progress
+                      <Trash2 className="h-3 w-3" />
+                      Delete
                     </Button>
                   </div>
                 </CardContent>
               </Card>
             </motion.div>
-          ))}
-          
-          {goals.length === 0 && (
-            <Card>
-              <CardContent className="pt-6">
-                <div className="text-center py-8">
-                  <Target className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">No goals yet</h3>
-                  <p className="text-muted-foreground mb-4">
-                    Create your first goal and let AI help you achieve it!
-                  </p>
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <DemoRestrictedButton>Add Your First Goal</DemoRestrictedButton>
-                    </DialogTrigger>
-                  </Dialog>
-                </div>
-              </CardContent>
-            </Card>
+          ))
           )}
         </div>
+
+        {/* Goal Creation Dialog - Shared between both buttons */}
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Create New Goal</DialogTitle>
+              <DialogDescription>
+                Set a meaningful goal and let AI help you achieve it
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4">
+              <DemoRestrictedInput
+                placeholder="Goal title (e.g., Learn Machine Learning)"
+                value={newGoal.title}
+                onChange={(e) => setNewGoal({...newGoal, title: e.target.value})}
+              />
+              
+              <DemoRestrictedTextarea
+                placeholder="Describe your goal in detail..."
+                value={newGoal.description}
+                onChange={(e) => setNewGoal({...newGoal, description: e.target.value})}
+              />
+              
+              <div className="grid grid-cols-2 gap-4">
+                <DemoRestrictedInput
+                  placeholder="Category (e.g., Learning, Health)"
+                  value={newGoal.category}
+                  onChange={(e) => setNewGoal({...newGoal, category: e.target.value})}
+                />
+                
+                <select
+                  value={newGoal.priority}
+                  onChange={(e) => setNewGoal({...newGoal, priority: e.target.value as Goal['priority']})}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <option value="Low">Low Priority</option>
+                  <option value="Medium">Medium Priority</option>
+                  <option value="High">High Priority</option>
+                </select>
+              </div>
+              
+              <DemoRestrictedInput
+                type="date"
+                value={newGoal.targetDate}
+                onChange={(e) => setNewGoal({...newGoal, targetDate: e.target.value})}
+              />
+              
+              <DemoRestrictedButton 
+                onClick={addGoal} 
+                className="w-full"
+                disabled={isCreating}
+              >
+                {isCreating ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Creating Goal...
+                  </>
+                ) : (
+                  'Create Goal'
+                )}
+              </DemoRestrictedButton>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </DashboardLayout>
   )

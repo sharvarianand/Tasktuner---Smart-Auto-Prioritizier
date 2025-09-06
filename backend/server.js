@@ -8,6 +8,8 @@ const voiceRoutes = require('./src/routes/voiceRoutes');
 const userRoutes = require("./src/routes/userRoutes");
 const analyticsRoutes = require("./src/routes/analyticsRoutes");
 const notificationRoutes = require('./src/routes/notificationRoutes');
+const calendarRoutes = require('./src/routes/calendarRoutes');
+const goalRoutes = require('./src/routes/goalRoutes');
 
 const app = express();
 
@@ -22,6 +24,8 @@ app.use('/api/voice', voiceRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/analytics", analyticsRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/calendar', calendarRoutes);
+app.use('/api/goals', goalRoutes);
 
 // Health Check Route
 app.get('/', (req, res) => {
