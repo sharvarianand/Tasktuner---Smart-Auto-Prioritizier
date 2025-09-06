@@ -39,6 +39,7 @@ import { toast } from "sonner"
 import { useUser } from "@clerk/clerk-react"
 import { useDemoMode } from "@/contexts/DemoContext"
 import { goalApi } from "@/lib/api"
+import notificationService from "@/services/notificationService"
 
 interface Goal {
   id: string
@@ -140,7 +141,7 @@ const Goals = () => {
       setNewGoal({ title: '', description: '', targetDate: '', category: '', priority: 'Medium' })
       setIsDialogOpen(false)
       
-      toast.success("Goal saved successfully! Now let's break it down into tasks 🎯")
+      notificationService.showGoalRoast(newGoal.title, 'created')
     } catch (error) {
       console.error('Failed to create goal:', error)
       toast.error(`Failed to create goal: ${error.message}`)
@@ -160,7 +161,11 @@ const Goals = () => {
       await loadGoals()
       await loadStats()
       
-      toast.success(`🎯 Goal broken down into ${result.generatedTasks.length} specific tasks! Check the Key Milestones below.`)
+      // Find the goal to get its title
+      const goal = goals.find(g => g.id === goalId)
+      if (goal) {
+        notificationService.showGoalRoast(goal.title, 'broken_down')
+      }
     } catch (error) {
       console.error('Failed to break down goal:', error)
       toast.error(`Failed to break down goal with AI: ${error.message}`)
@@ -193,7 +198,11 @@ const Goals = () => {
       await loadGoals()
       await loadStats()
       
-      toast.success("🎉 Goal marked as complete! Great job!")
+      // Find the goal to get its title
+      const goal = goals.find(g => g.id === goalId)
+      if (goal) {
+        notificationService.showGoalRoast(goal.title, 'completed')
+      }
     } catch (error) {
       console.error('Failed to mark goal as complete:', error)
       toast.error(`Failed to mark goal as complete: ${error.message}`)
@@ -231,7 +240,11 @@ const Goals = () => {
       await loadGoals()
       await loadStats()
       
-      toast.success(isCompleted ? "Task marked as incomplete" : "Task completed! 🎉")
+      if (isCompleted) {
+        toast.info("Task marked as incomplete")
+      } else {
+        notificationService.showCompletionRoast(goal.subtasks[subtaskIndex], 10)
+      }
     } catch (error) {
       console.error('Failed to toggle subtask:', error)
       toast.error(`Failed to update task: ${error.message}`)

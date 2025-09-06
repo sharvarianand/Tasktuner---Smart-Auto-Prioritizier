@@ -292,7 +292,6 @@ const Settings = () => {
                       size="sm"
                       className="text-blue-600 border-blue-300 hover:bg-blue-50"
                       onClick={() => {
-                        toast.success("Sending motivational roast! 💪")
                         notificationService.showMotivationalRoast("Test Task")
                       }}
                     >
@@ -303,7 +302,6 @@ const Settings = () => {
                       size="sm"
                       className="text-orange-600 border-orange-300 hover:bg-orange-50"
                       onClick={() => {
-                        toast.success("Calling out your procrastination! 😏")
                         notificationService.showProcrastinationRoast("Test Task")
                       }}
                     >
@@ -314,7 +312,6 @@ const Settings = () => {
                       size="sm"
                       className="text-green-600 border-green-300 hover:bg-green-50"
                       onClick={() => {
-                        toast.success("Celebrating your completion! 🎉")
                         notificationService.showCompletionRoast("Test Task", 50)
                       }}
                     >
@@ -325,27 +322,7 @@ const Settings = () => {
                       size="sm"
                       className="text-red-600 border-red-300 hover:bg-red-50"
                       onClick={() => {
-                        toast.success("Sending overdue roast! 🔥")
-                        // Create a mock overdue task for testing
-                        const mockOverdueTask = {
-                          id: 'test-overdue',
-                          title: 'Test Overdue Task',
-                          dueDate: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Yesterday
-                          endTime: '12:00'
-                        }
-                        // Manually trigger overdue notification since it's normally automatic
-                        notificationService.showNotification(
-                          `⏰ "${mockOverdueTask.title}" is overdue!`,
-                          {
-                            body: "Procrastination level: Expert! 🥴 Time to adult... just a little bit! 👔",
-                            tag: 'overdue-test',
-                            requireInteraction: true,
-                            actions: [
-                              { action: 'complete', title: '✅ Mark Done' },
-                              { action: 'reschedule', title: '📅 Reschedule' }
-                            ]
-                          }
-                        )
+                        notificationService.showOverdueRoast("Test Overdue Task")
                       }}
                     >
                       🔥 Overdue
