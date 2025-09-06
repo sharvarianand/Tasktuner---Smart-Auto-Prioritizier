@@ -1,0 +1,30 @@
+{
+  "expo": {
+    "name": "TaskTuner Mobile",
+    "slug": "tasktuner-mobile",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/Tasktuner_logo.png",
+    "splash": {
+      "image": "./assets/Tasktuner_logo.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#111827"
+    },
+    "updates": {
+      "fallbackToCacheTimeout": 0
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/Tasktuner_logo.png",
+        "backgroundColor": "#111827"
+      },
+      "package": "com.sharvarianand.tasktuner"
+    }
+  }
+}
