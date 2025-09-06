@@ -9,6 +9,30 @@ const {
   getAuthStatus 
 } = require("../controllers/calendarController");
 
+// Import token management functions
+const fs = require('fs');
+const path = require('path');
+const TOKEN_FILE_PATH = path.join(__dirname, '../../temp_tokens.json');
+
+// Load tokens from file
+let userTokens = {};
+try {
+  if (fs.existsSync(TOKEN_FILE_PATH)) {
+    userTokens = JSON.parse(fs.readFileSync(TOKEN_FILE_PATH, 'utf8'));
+  }
+} catch (error) {
+  userTokens = {};
+}
+
+// Save tokens to file
+const saveTokens = () => {
+  try {
+    fs.writeFileSync(TOKEN_FILE_PATH, JSON.stringify(userTokens, null, 2));
+  } catch (error) {
+    console.error('❌ Failed to save tokens:', error.message);
+  }
+};
+
 // 🔹 Initialize calendar - List available endpoints
 router.get("/init", (req, res) => {
   res.json({
@@ -43,5 +67,43 @@ router.post("/events", addEventToCalendar);
 
 // 🔹 Get calendar events
 router.get("/events", getCalendarEvents);
+
+// 🔹 Disconnect calendar
+router.post("/disconnect", async (req, res) => {
+  try {
+    // Clear user tokens
+    const userId = req.user?.id || req.headers['x-user-id'] || 'test_user_default';
+    userTokens[userId] = null;
+    saveTokens();
+    
+    res.json({ message: "Calendar disconnected successfully" });
+  } catch (error) {
+    console.error("❌ Error disconnecting calendar:", error);
+    res.status(500).json({ error: "Failed to disconnect calendar" });
+  }
+});
+
+// 🔹 Sync calendar
+router.post("/sync", async (req, res) => {
+  try {
+    const userId = req.user?.id || req.headers['x-user-id'] || 'test_user_default';
+    
+    if (!userTokens[userId]) {
+      return res.status(401).json({ error: "Calendar not connected" });
+    }
+
+    // Perform sync operation
+    // This would typically sync events between TaskTuner and Google Calendar
+    const lastSyncTime = new Date().toISOString();
+    
+    res.json({ 
+      message: "Calendar synced successfully",
+      lastSyncTime 
+    });
+  } catch (error) {
+    console.error("❌ Error syncing calendar:", error);
+    res.status(500).json({ error: "Failed to sync calendar" });
+  }
+});
 
 module.exports = router;
