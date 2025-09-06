@@ -51,7 +51,11 @@ import {
   X,
   CheckSquare,
   Bell,
-  Undo
+  Undo,
+  Check,
+  ChevronUp,
+  ChevronDown,
+  Square
 } from "lucide-react"
 import { toast } from "sonner"
 import { taskApi } from "@/lib/api"
@@ -225,6 +229,10 @@ const Tasks = () => {
   const [deletedTasks, setDeletedTasks] = useState<Task[]>([])
   const [showUndoButton, setShowUndoButton] = useState(false)
   const [undoTimeout, setUndoTimeout] = useState<NodeJS.Timeout | null>(null)
+
+  // Task selection and reordering functionality
+  const [selectedTasks, setSelectedTasks] = useState<Set<string>>(new Set())
+  const [isSelectionMode, setIsSelectionMode] = useState(false)
 
   // Load tasks and stats on component mount
   useEffect(() => {
@@ -973,6 +981,106 @@ const Tasks = () => {
     }
   }
 
+  // Task selection functions
+  const toggleTaskSelection = (taskId: string) => {
+    const newSelected = new Set(selectedTasks)
+    if (newSelected.has(taskId)) {
+      newSelected.delete(taskId)
+    } else {
+      newSelected.add(taskId)
+    }
+    setSelectedTasks(newSelected)
+  }
+
+  const selectAllTasks = () => {
+    const allTaskIds = new Set(filteredTasks.map(task => task.id))
+    setSelectedTasks(allTaskIds)
+  }
+
+  const clearSelection = () => {
+    setSelectedTasks(new Set())
+  }
+
+  const toggleSelectionMode = () => {
+    setIsSelectionMode(!isSelectionMode)
+    if (isSelectionMode) {
+      clearSelection()
+    }
+  }
+
+  // Task reordering functions
+  const moveTaskUp = async (taskId: string) => {
+    const taskIndex = tasks.findIndex(task => task.id === taskId)
+    if (taskIndex > 0) {
+      const newTasks = [...tasks]
+      const temp = newTasks[taskIndex]
+      newTasks[taskIndex] = newTasks[taskIndex - 1]
+      newTasks[taskIndex - 1] = temp
+      setTasks(newTasks)
+      
+      // Update order in backend
+      try {
+        await taskApi.updateTask(taskId, { order: taskIndex - 1 })
+        await taskApi.updateTask(newTasks[taskIndex].id, { order: taskIndex })
+      } catch (error) {
+        console.error('Failed to update task order:', error)
+        toast.error('Failed to update task order')
+      }
+    }
+  }
+
+  const moveTaskDown = async (taskId: string) => {
+    const taskIndex = tasks.findIndex(task => task.id === taskId)
+    if (taskIndex < tasks.length - 1) {
+      const newTasks = [...tasks]
+      const temp = newTasks[taskIndex]
+      newTasks[taskIndex] = newTasks[taskIndex + 1]
+      newTasks[taskIndex + 1] = temp
+      setTasks(newTasks)
+      
+      // Update order in backend
+      try {
+        await taskApi.updateTask(taskId, { order: taskIndex + 1 })
+        await taskApi.updateTask(newTasks[taskIndex].id, { order: taskIndex })
+      } catch (error) {
+        console.error('Failed to update task order:', error)
+        toast.error('Failed to update task order')
+      }
+    }
+  }
+
+  // Mark selected tasks as completed
+  const markSelectedTasksCompleted = async () => {
+    if (selectedTasks.size === 0) return
+
+    try {
+      const promises = Array.from(selectedTasks).map(taskId => 
+        taskApi.updateTask(taskId, { completed: true })
+      )
+      
+      await Promise.all(promises)
+      
+      // Update local state
+      setTasks(tasks.map(task => 
+        selectedTasks.has(task.id) 
+          ? { ...task, completed: true, completedAt: new Date().toISOString() }
+          : task
+      ))
+      
+      // Show completion roast
+      const completedCount = selectedTasks.size
+      notificationService.showCompletionRoast(`${completedCount} tasks`, completedCount * 10)
+      
+      // Clear selection
+      clearSelection()
+      setIsSelectionMode(false)
+      
+    } catch (error) {
+      console.error('Failed to mark tasks as completed:', error)
+      toast.error('Failed to mark tasks as completed')
+    }
+  }
+
   if (isLoading) {
     return (
       <DashboardLayout title="Tasks">
@@ -1595,6 +1703,48 @@ const Tasks = () => {
               </Button>
             )}
 
+            {/* Selection Mode Controls */}
+            <Button
+              variant={isSelectionMode ? "default" : "outline"}
+              size="sm"
+              onClick={toggleSelectionMode}
+              className={isSelectionMode ? "bg-primary text-primary-foreground" : ""}
+            >
+              <CheckSquare className="h-4 w-4 mr-1" />
+              {isSelectionMode ? "Exit Selection" : "Select Tasks"}
+            </Button>
+
+            {isSelectionMode && (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={selectAllTasks}
+                  disabled={filteredTasks.length === 0}
+                >
+                  Select All
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={clearSelection}
+                  disabled={selectedTasks.size === 0}
+                >
+                  Clear Selection
+                </Button>
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={markSelectedTasksCompleted}
+                  disabled={selectedTasks.size === 0}
+                  className="bg-green-600 hover:bg-green-700 text-white"
+                >
+                  <Check className="h-4 w-4 mr-1" />
+                  Mark Selected Complete ({selectedTasks.size})
+                </Button>
+              </>
+            )}
+
             <Button
               variant="outline"
               size="sm"
@@ -1659,23 +1809,45 @@ const Tasks = () => {
               >
                 <CardContent className="pt-6">
                   <div className="flex items-start gap-4">
-                    <DemoRestrictedButton
-                      variant="ghost"
-                      size="icon"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        console.log('📋 Checkbox clicked for task:', task.title); // Debug log
-                        toggleTask(task.id);
-                      }}
-                      className="mt-1 flex-shrink-0 hover:bg-muted/50 rounded-full transition-colors"
-                      aria-label={task.completed ? "Mark as incomplete" : "Mark as complete"}
-                    >
-                      {task.completed ? (
-                        <CheckCircle className="h-5 w-5 text-green-500" />
-                      ) : (
-                        <Circle className="h-5 w-5 text-muted-foreground" />
-                      )}
-                    </DemoRestrictedButton>
+                    {/* Selection Mode Checkbox */}
+                    {isSelectionMode ? (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleTaskSelection(task.id);
+                        }}
+                        className={`mt-1 flex-shrink-0 hover:bg-muted/50 rounded-full transition-colors ${
+                          selectedTasks.has(task.id) ? 'bg-primary/10' : ''
+                        }`}
+                        aria-label={selectedTasks.has(task.id) ? "Deselect task" : "Select task"}
+                      >
+                        {selectedTasks.has(task.id) ? (
+                          <CheckSquare className="h-5 w-5 text-primary" />
+                        ) : (
+                          <Square className="h-5 w-5 text-muted-foreground" />
+                        )}
+                      </Button>
+                    ) : (
+                      <DemoRestrictedButton
+                        variant="ghost"
+                        size="icon"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          console.log('📋 Checkbox clicked for task:', task.title); // Debug log
+                          toggleTask(task.id);
+                        }}
+                        className="mt-1 flex-shrink-0 hover:bg-muted/50 rounded-full transition-colors"
+                        aria-label={task.completed ? "Mark as incomplete" : "Mark as complete"}
+                      >
+                        {task.completed ? (
+                          <CheckCircle className="h-5 w-5 text-green-500" />
+                        ) : (
+                          <Circle className="h-5 w-5 text-muted-foreground" />
+                        )}
+                      </DemoRestrictedButton>
+                    )}
                     
                     <div className="flex-1 min-w-0" onClick={(e) => e.stopPropagation()}>{/* min-w-0 prevents flex overflow */}
                       <div className="flex items-start justify-between mb-2">
@@ -1862,6 +2034,49 @@ const Tasks = () => {
                         </div>
                         
                         <div className="flex gap-1">
+                          {/* Reordering buttons */}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              moveTaskUp(task.id);
+                            }}
+                            disabled={index === 0}
+                            className="text-muted-foreground hover:text-primary"
+                            title="Move up"
+                          >
+                            <ChevronUp className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              moveTaskDown(task.id);
+                            }}
+                            disabled={index === filteredTasks.length - 1}
+                            className="text-muted-foreground hover:text-primary"
+                            title="Move down"
+                          >
+                            <ChevronDown className="h-4 w-4" />
+                          </Button>
+
+                          {/* Mark as Completed button */}
+                          {!task.completed && (
+                            <Button
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleTask(task.id);
+                              }}
+                              className="bg-green-600 hover:bg-green-700 text-white mr-2"
+                            >
+                              <Check className="h-4 w-4 mr-1" />
+                              Mark Complete
+                            </Button>
+                          )}
+
                           {/* Start Now button for top priority task */}
                           {index === 0 && !task.completed && (
                             <Button
@@ -1871,7 +2086,7 @@ const Tasks = () => {
                                 // Navigate to Focus mode with this task
                                 window.location.href = '/focus';
                               }}
-                              className="bg-green-600 hover:bg-green-700 text-white mr-2"
+                              className="bg-blue-600 hover:bg-blue-700 text-white mr-2"
                             >
                               <Zap className="h-4 w-4 mr-1" />
                               Start Now
