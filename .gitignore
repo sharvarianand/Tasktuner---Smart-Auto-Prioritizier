@@ -76,3 +76,54 @@ jspm_packages/
 
 # TernJS port file
 .tern-port
+
+# Nested node_modules (monorepo safety)
+**/node_modules/
+node_modules_root_backup/
+
+# Expo / Metro caches
+.expo/
+.expo-shared/
+.expo-dev-cache/
+**/.expo/
+**/.expo-shared/
+**/.expo-dev-cache/
+.cache/
+**/.cache/
+.tmp/
+
+# Frontend (Vite/Next) build & caches
+frontend/.vite/
+frontend/dist/
+frontend/.cache/
+frontend/.vercel/
+.next/
+
+# Mobile build outputs
+mobile/TaskTunerMobile/android/
+mobile/TaskTunerMobile/ios/
+mobile/TaskTunerMobile/dist/
+mobile/TaskTunerMobile/build/
+
+# Logs anywhere
+**/*.log
+
+# Source maps
+*.map
+
+# Additional env files
+.env.*
+**/.env
+**/.env.*
+
+# Platform keystores
+*.keystore
+*.jks
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+
+# Sensitive configs
+backend/firebase-service-account.json
