@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { DashboardLayout } from "@/components/dashboard-layout"
@@ -50,12 +51,7 @@ import {
   Save,
   X,
   CheckSquare,
-  Bell,
-  Undo,
-  Check,
-  ChevronUp,
-  ChevronDown,
-  Square
+  Bell
 } from "lucide-react"
 import { toast } from "sonner"
 import { taskApi } from "@/lib/api"
@@ -85,7 +81,6 @@ interface Task {
   isDaily?: boolean
   completedDates?: string[]
   calendarEventId?: string
-  goalId?: string // ID of the goal this task belongs to
   reminders?: {
     before?: number // minutes before start
     after?: number  // minutes after end
@@ -219,20 +214,13 @@ const Tasks = () => {
   const [hasRoastedOverdue, setHasRoastedOverdue] = useState(false)
   
   // AI Prioritization state
+  const [isAIMode, setIsAIMode] = useState(true) // AI mode on by default
   const [prioritizedTasks, setPrioritizedTasks] = useState<Task[]>([])
   const [aiAnalysis, setAiAnalysis] = useState<PrioritizedTasksResponse['insights'] | null>(null)
+  const [isReprioritizing, setIsReprioritizing] = useState(false)
   const [lastReprioritized, setLastReprioritized] = useState<Date | null>(null)
   const [aiRecommendations, setAiRecommendations] = useState<string[]>([])
-  const [smartView, setSmartView] = useState<'priority' | 'urgency' | 'optimal'>('priority')
-
-  // Clear all tasks functionality
-  const [deletedTasks, setDeletedTasks] = useState<Task[]>([])
-  const [showUndoButton, setShowUndoButton] = useState(false)
-  const [undoTimeout, setUndoTimeout] = useState<NodeJS.Timeout | null>(null)
-
-  // Task selection and reordering functionality
-  const [selectedTasks, setSelectedTasks] = useState<Set<string>>(new Set())
-  const [isSelectionMode, setIsSelectionMode] = useState(false)
+  const [smartView, setSmartView] = useState<'priority' | 'urgency' | 'optimal' | 'manual'>('priority')
 
   // Load tasks and stats on component mount
   useEffect(() => {
@@ -247,12 +235,12 @@ const Tasks = () => {
     }
   }, [])
 
-  // Load tasks and stats on component mount
+  // Reload tasks when AI mode changes
   useEffect(() => {
     if (tasks.length > 0) { // Only reload if we have tasks
       loadTasksAndStats()
     }
-  }, [])
+  }, [isAIMode])
 
   // Handle task actions from notifications
   useEffect(() => {
@@ -403,6 +391,7 @@ const Tasks = () => {
     try {
       setIsLoading(true)
       
+      if (isAIMode) {
         // Load AI-prioritized tasks
         const prioritizedData = await taskApi.getPrioritizedTasks()
         setPrioritizedTasks(prioritizedData.prioritizedTasks)
@@ -410,6 +399,13 @@ const Tasks = () => {
         setAiAnalysis(prioritizedData.insights)
         setAiRecommendations(prioritizedData.insights.recommendations)
         setLastPrioritized(new Date())
+      } else {
+        // Load regular tasks
+        const tasksData = await taskApi.getTasks()
+        setTasks(tasksData)
+        setPrioritizedTasks([])
+        setAiAnalysis(null)
+      }
       
       const statsData = await taskApi.getUserStats()
       setUserStats(statsData)
@@ -421,9 +417,75 @@ const Tasks = () => {
     }
   }
 
+  // Force AI reprioritization
+  const forceReprioritization = async () => {
+    try {
+      setIsReprioritizing(true)
+      const previousOrder = tasks.map(t => t.id)
+      
+      const prioritizedData = await taskApi.reprioritizeTasks()
+      setPrioritizedTasks(prioritizedData.prioritizedTasks)
+      setTasks(prioritizedData.prioritizedTasks)
+      setAiAnalysis(prioritizedData.insights)
+      setAiRecommendations(prioritizedData.insights.recommendations)
+      setLastReprioritized(new Date())
+      
+      // Detect significant changes
+      const newOrder = prioritizedData.prioritizedTasks.map(t => t.id)
+      const topTask = prioritizedData.prioritizedTasks[0]
+      const previousTopTaskId = previousOrder[0]
+      
+      toast.success("🧠 AI has reprioritized your tasks!")
+      
+      // Show specific change notifications
+      if (topTask && topTask.id !== previousTopTaskId) {
+        setTimeout(() => {
+          toast.info(`📈 "${topTask.title}" moved to top priority`, {
+            description: topTask.aiInsights?.priorityReason || "Based on AI analysis"
+          })
+        }, 1000)
+      }
+      
+      // Count tasks that moved significantly
+      const significantMoves = newOrder.filter((taskId, newIndex) => {
+        const oldIndex = previousOrder.indexOf(taskId)
+        return Math.abs(newIndex - oldIndex) >= 3
+      }).length
+      
+      if (significantMoves > 0) {
+        setTimeout(() => {
+          toast.info(`🔄 ${significantMoves} tasks repositioned for optimal flow`)
+        }, 2000)
+      }
+      
+    } catch (error) {
+      console.error('Error reprioritizing tasks:', error)
+      toast.error('Failed to reprioritize tasks')
+    } finally {
+      setIsReprioritizing(false)
+    }
+  }
 
-
-
+  // Auto-reprioritize when new tasks are added (with delay to avoid spam)
+  const [reprioritizeTimeout, setReprioritizeTimeout] = useState<NodeJS.Timeout | null>(null)
+  
+  const scheduleAutoReprioritization = () => {
+    if (!isAIMode) return
+    
+    // Clear existing timeout
+    if (reprioritizeTimeout) {
+      clearTimeout(reprioritizeTimeout)
+    }
+    
+    // Schedule reprioritization in 2 seconds
+    const timeoutId = setTimeout(() => {
+      if (isAIMode && tasks.length > 0) {
+        forceReprioritization()
+      }
+    }, 2000)
+    
+    setReprioritizeTimeout(timeoutId)
+  }
 
   const addTask = async () => {
     if (!newTask.title.trim()) {
@@ -457,14 +519,21 @@ const Tasks = () => {
       const task = await taskApi.createTask(taskData)
       
       // Schedule browser notifications if task has time and reminders
-      if (task.startTime && task.reminders && task.reminders.before > 0) {
+      if (task.startTime && task.reminders && (task.reminders.before > 0 || task.reminders.after > 0)) {
         if (notificationService?.showTaskNotifications) {
           notificationService.showTaskNotifications(task);
         }
       }
       
       // Reload tasks to get fresh AI prioritization
+      if (isAIMode) {
         await loadTasksAndStats() // This will reprioritize with the new task
+      } else {
+        setTasks([task, ...tasks])
+        // Reload stats to get updated counts
+        const statsData = await taskApi.getUserStats()
+        setUserStats(statsData)
+      }
       
       setNewTask({ 
         title: '', 
@@ -488,7 +557,7 @@ const Tasks = () => {
       if (task.calendarEventId) {
         successMessage += " | Added to Google Calendar 📅"
       }
-      if (task.startTime && task.reminders && task.reminders.before > 0) {
+      if (task.startTime && task.reminders && (task.reminders.before > 0 || task.reminders.after > 0)) {
         successMessage += " | Reminders scheduled 🔔"
       }
       
@@ -551,10 +620,16 @@ const Tasks = () => {
         }
       }
       
-      // Reload AI prioritization (after a short delay to avoid too many calls)
+      // Reload AI prioritization if in AI mode (after a short delay to avoid too many calls)
+      if (isAIMode) {
         setTimeout(() => {
           loadTasksAndStats()
         }, 1000)
+      } else {
+        // Just reload stats in manual mode
+        const statsData = await taskApi.getUserStats()
+        setUserStats(statsData)
+      }
       
     } catch (error) {
       console.error('Error toggling task:', error)
@@ -592,7 +667,7 @@ const Tasks = () => {
       dueDate: task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : '',
       startTime: task.startTime || '',
       endTime: task.endTime || '',
-              reminders: task.reminders || { before: 0 }
+      reminders: task.reminders || { before: 0, after: 0 }
     })
     // Set calendar sync state based on whether task already has a calendar event
     setEditAddToCalendar(!!task.calendarEventId)
@@ -911,176 +986,6 @@ const Tasks = () => {
     }
   }
 
-  const clearAllTasks = async () => {
-    try {
-      // Store tasks for undo functionality
-      setDeletedTasks(tasks)
-      setShowUndoButton(true)
-      
-      // Call backend API to actually delete all tasks
-      await taskApi.clearAllTasks()
-      
-      // Clear local state
-      setTasks([])
-      
-      // Update user stats
-      const statsData = await taskApi.getUserStats()
-      setUserStats(statsData)
-      
-      toast.success("All tasks have been cleared!")
-      
-      // Auto-hide undo button after 30 seconds
-      setTimeout(() => {
-        setShowUndoButton(false)
-        setDeletedTasks([])
-      }, 30000)
-      
-    } catch (error) {
-      console.error('Error clearing all tasks:', error)
-      toast.error('Failed to clear all tasks. Please try again.')
-      
-      // Reset undo state on error
-      setShowUndoButton(false)
-      setDeletedTasks([])
-    }
-  }
-
-  const undoClearAllTasks = async () => {
-    try {
-      // Restore tasks to backend
-      for (const task of deletedTasks) {
-        await taskApi.createTask({
-          title: task.title,
-          description: task.description,
-          priority: task.priority,
-          category: task.category,
-          dueDate: task.dueDate,
-          startDate: task.startDate,
-          startTime: task.startTime,
-          endTime: task.endTime,
-          reminders: { 
-            before: task.reminders?.before || 0,
-            after: task.reminders?.after || 0 
-          },
-          isDaily: task.isDaily
-        })
-      }
-      
-      // Reload tasks and stats from backend
-      await loadTasksAndStats()
-      
-      // Clear undo state
-      setDeletedTasks([])
-      setShowUndoButton(false)
-      
-      toast.success("Clearing tasks has been undone!")
-      
-    } catch (error) {
-      console.error('Error undoing clear all tasks:', error)
-      toast.error('Failed to undo clearing tasks. Please try again.')
-    }
-  }
-
-  // Task selection functions
-  const toggleTaskSelection = (taskId: string) => {
-    const newSelected = new Set(selectedTasks)
-    if (newSelected.has(taskId)) {
-      newSelected.delete(taskId)
-    } else {
-      newSelected.add(taskId)
-    }
-    setSelectedTasks(newSelected)
-  }
-
-  const selectAllTasks = () => {
-    const allTaskIds = new Set(filteredTasks.map(task => task.id))
-    setSelectedTasks(allTaskIds)
-  }
-
-  const clearSelection = () => {
-    setSelectedTasks(new Set())
-  }
-
-  const toggleSelectionMode = () => {
-    setIsSelectionMode(!isSelectionMode)
-    if (isSelectionMode) {
-      clearSelection()
-    }
-  }
-
-  // Task reordering functions
-  const moveTaskUp = async (taskId: string) => {
-    const taskIndex = tasks.findIndex(task => task.id === taskId)
-    if (taskIndex > 0) {
-      const newTasks = [...tasks]
-      const temp = newTasks[taskIndex]
-      newTasks[taskIndex] = newTasks[taskIndex - 1]
-      newTasks[taskIndex - 1] = temp
-      setTasks(newTasks)
-      
-      // Update order in backend
-      try {
-        await taskApi.updateTask(taskId, { order: taskIndex - 1 })
-        await taskApi.updateTask(newTasks[taskIndex].id, { order: taskIndex })
-      } catch (error) {
-        console.error('Failed to update task order:', error)
-        toast.error('Failed to update task order')
-      }
-    }
-  }
-
-  const moveTaskDown = async (taskId: string) => {
-    const taskIndex = tasks.findIndex(task => task.id === taskId)
-    if (taskIndex < tasks.length - 1) {
-      const newTasks = [...tasks]
-      const temp = newTasks[taskIndex]
-      newTasks[taskIndex] = newTasks[taskIndex + 1]
-      newTasks[taskIndex + 1] = temp
-      setTasks(newTasks)
-      
-      // Update order in backend
-      try {
-        await taskApi.updateTask(taskId, { order: taskIndex + 1 })
-        await taskApi.updateTask(newTasks[taskIndex].id, { order: taskIndex })
-      } catch (error) {
-        console.error('Failed to update task order:', error)
-        toast.error('Failed to update task order')
-      }
-    }
-  }
-
-  // Mark selected tasks as completed
-  const markSelectedTasksCompleted = async () => {
-    if (selectedTasks.size === 0) return
-
-    try {
-      const promises = Array.from(selectedTasks).map(taskId => 
-        taskApi.updateTask(taskId, { completed: true })
-      )
-      
-      await Promise.all(promises)
-      
-      // Update local state
-      setTasks(tasks.map(task => 
-        selectedTasks.has(task.id) 
-          ? { ...task, completed: true, completedAt: new Date().toISOString() }
-          : task
-      ))
-      
-      // Show completion roast
-      const completedCount = selectedTasks.size
-      notificationService.showCompletionRoast(`${completedCount} tasks`, completedCount * 10)
-      
-      // Clear selection
-      clearSelection()
-      setIsSelectionMode(false)
-      
-    } catch (error) {
-      console.error('Failed to mark tasks as completed:', error)
-      toast.error('Failed to mark tasks as completed')
-    }
-  }
-
   if (isLoading) {
     return (
       <DashboardLayout title="Tasks">
@@ -1143,14 +1048,45 @@ const Tasks = () => {
               <div>
                 <h3 className="text-lg font-semibold text-foreground">AI Smart Prioritization</h3>
                 <p className="text-sm text-muted-foreground">
-                  Tasks automatically prioritized by advanced AI algorithms
+                  {isAIMode ? "Tasks automatically prioritized by AI" : "Manual task ordering"}
                 </p>
               </div>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              {/* AI Mode Toggle */}
+              <Button
+                variant={isAIMode ? "default" : "outline"}
+                size="sm"
+                onClick={() => setIsAIMode(!isAIMode)}
+                className="flex items-center gap-2"
+              >
+                {isAIMode ? <Sparkles className="h-4 w-4" /> : <Brain className="h-4 w-4" />}
+                {isAIMode ? "AI Mode" : "Manual"}
+              </Button>
+              
+              {/* Reprioritize Button */}
+              {isAIMode && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={forceReprioritization}
+                  disabled={isReprioritizing}
+                  className="flex items-center gap-2"
+                >
+                  {isReprioritizing ? (
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Zap className="h-4 w-4" />
+                  )}
+                  {isReprioritizing ? "Analyzing..." : "♻ AI Reprioritize"}
+                </Button>
+              )}
             </div>
           </div>
           
           {/* AI Insights Panel */}
-          {aiAnalysis && (
+          {isAIMode && aiAnalysis && (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
               {/* Stats Cards */}
               <div className="grid grid-cols-2 gap-2 md:col-span-2">
@@ -1205,7 +1141,7 @@ const Tasks = () => {
           )}
           
           {/* AI Summary */}
-          {aiAnalysis && (
+          {isAIMode && aiAnalysis && (
             <div className="bg-white dark:bg-gray-800 rounded-lg p-3 border">
               <div className="flex items-start gap-2">
                 <Brain className="h-4 w-4 text-purple-600 mt-0.5 flex-shrink-0" />
@@ -1565,7 +1501,27 @@ const Tasks = () => {
                           </SelectContent>
                         </Select>
                       </div>
-
+                      <div className="space-y-2">
+                        <label className="text-xs text-muted-foreground">After end (minutes)</label>
+                        <Select 
+                          value={newTask.reminders.after.toString()} 
+                          onValueChange={(value) => setNewTask({
+                            ...newTask, 
+                            reminders: {...newTask.reminders, after: parseInt(value)}
+                          })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="0">No reminder</SelectItem>
+                            <SelectItem value="5">5 minutes</SelectItem>
+                            <SelectItem value="15">15 minutes</SelectItem>
+                            <SelectItem value="30">30 minutes</SelectItem>
+                            <SelectItem value="60">1 hour</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -1677,74 +1633,6 @@ const Tasks = () => {
               {showCompleted ? "Hide" : "Show"} Completed
             </DemoRestrictedButton>
 
-            {/* Clear All Tasks Button */}
-            {tasks.length > 0 && (
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={clearAllTasks}
-                className="bg-red-600 hover:bg-red-700"
-              >
-                <Trash2 className="h-4 w-4 mr-1" />
-                Clear All Tasks
-              </Button>
-            )}
-
-            {/* Undo Clear Button */}
-            {showUndoButton && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={undoClearAllTasks}
-                className="bg-yellow-100 hover:bg-yellow-200 text-yellow-800 border-yellow-300"
-              >
-                <Undo className="h-4 w-4 mr-1" />
-                Undo Clear
-              </Button>
-            )}
-
-            {/* Selection Mode Controls */}
-            <Button
-              variant={isSelectionMode ? "default" : "outline"}
-              size="sm"
-              onClick={toggleSelectionMode}
-              className={isSelectionMode ? "bg-primary text-primary-foreground" : ""}
-            >
-              <CheckSquare className="h-4 w-4 mr-1" />
-              {isSelectionMode ? "Exit Selection" : "Select Tasks"}
-            </Button>
-
-            {isSelectionMode && (
-              <>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={selectAllTasks}
-                  disabled={filteredTasks.length === 0}
-                >
-                  Select All
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={clearSelection}
-                  disabled={selectedTasks.size === 0}
-                >
-                  Clear Selection
-                </Button>
-                <Button
-                  variant="default"
-                  size="sm"
-                  onClick={markSelectedTasksCompleted}
-                  disabled={selectedTasks.size === 0}
-                  className="bg-green-600 hover:bg-green-700 text-white"
-                >
-                  <Check className="h-4 w-4 mr-1" />
-                  Mark Selected Complete ({selectedTasks.size})
-                </Button>
-              </>
-            )}
-
             <Button
               variant="outline"
               size="sm"
@@ -1794,13 +1682,13 @@ const Tasks = () => {
                 className={`transition-all duration-500 hover:shadow-lg ${
                   task.completed ? 'opacity-60' : 
                   isTaskOverdue(task) ? 'border-red-200 bg-red-50/30 dark:border-red-800 dark:bg-red-900/10' : 
-                  task.aiInsights?.isUrgent ? 'border-red-300 bg-red-50/50 shadow-red-100 dark:border-red-700 dark:bg-red-900/20' :
-                  index === 0 ? 'border-purple-300 bg-purple-50/50 shadow-purple-100 dark:border-purple-700 dark:bg-purple-900/20 ring-2 ring-purple-200 dark:ring-purple-800' :
-                  index < 3 ? 'border-blue-200 bg-blue-50/30 dark:border-blue-800 dark:bg-blue-900/10' :
+                  isAIMode && task.aiInsights?.isUrgent ? 'border-red-300 bg-red-50/50 shadow-red-100 dark:border-red-700 dark:bg-red-900/20' :
+                  isAIMode && index === 0 ? 'border-purple-300 bg-purple-50/50 shadow-purple-100 dark:border-purple-700 dark:bg-purple-900/20 ring-2 ring-purple-200 dark:ring-purple-800' :
+                  isAIMode && index < 3 ? 'border-blue-200 bg-blue-50/30 dark:border-blue-800 dark:bg-blue-900/10' :
                   ''
                 }`}
                 data-overdue={isTaskOverdue(task) ? 'true' : 'false'}
-                data-ai-priority={task.aiRank || index + 1}
+                data-ai-priority={isAIMode ? task.aiRank || index + 1 : undefined}
                 onClick={(e) => {
                   // Prevent card clicks from toggling task completion
                   e.preventDefault();
@@ -1809,45 +1697,23 @@ const Tasks = () => {
               >
                 <CardContent className="pt-6">
                   <div className="flex items-start gap-4">
-                    {/* Selection Mode Checkbox */}
-                    {isSelectionMode ? (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleTaskSelection(task.id);
-                        }}
-                        className={`mt-1 flex-shrink-0 hover:bg-muted/50 rounded-full transition-colors ${
-                          selectedTasks.has(task.id) ? 'bg-primary/10' : ''
-                        }`}
-                        aria-label={selectedTasks.has(task.id) ? "Deselect task" : "Select task"}
-                      >
-                        {selectedTasks.has(task.id) ? (
-                          <CheckSquare className="h-5 w-5 text-primary" />
-                        ) : (
-                          <Square className="h-5 w-5 text-muted-foreground" />
-                        )}
-                      </Button>
-                    ) : (
-                      <DemoRestrictedButton
-                        variant="ghost"
-                        size="icon"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          console.log('📋 Checkbox clicked for task:', task.title); // Debug log
-                          toggleTask(task.id);
-                        }}
-                        className="mt-1 flex-shrink-0 hover:bg-muted/50 rounded-full transition-colors"
-                        aria-label={task.completed ? "Mark as incomplete" : "Mark as complete"}
-                      >
-                        {task.completed ? (
-                          <CheckCircle className="h-5 w-5 text-green-500" />
-                        ) : (
-                          <Circle className="h-5 w-5 text-muted-foreground" />
-                        )}
-                      </DemoRestrictedButton>
-                    )}
+                    <DemoRestrictedButton
+                      variant="ghost"
+                      size="icon"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        console.log('📋 Checkbox clicked for task:', task.title); // Debug log
+                        toggleTask(task.id);
+                      }}
+                      className="mt-1 flex-shrink-0 hover:bg-muted/50 rounded-full transition-colors"
+                      aria-label={task.completed ? "Mark as incomplete" : "Mark as complete"}
+                    >
+                      {task.completed ? (
+                        <CheckCircle className="h-5 w-5 text-green-500" />
+                      ) : (
+                        <Circle className="h-5 w-5 text-muted-foreground" />
+                      )}
+                    </DemoRestrictedButton>
                     
                     <div className="flex-1 min-w-0" onClick={(e) => e.stopPropagation()}>{/* min-w-0 prevents flex overflow */}
                       <div className="flex items-start justify-between mb-2">
@@ -1862,15 +1728,8 @@ const Tasks = () => {
                             </Badge>
                           )}
                           
-                          {/* Goal Indicator */}
-                          {task.goalId && (
-                            <Badge key="goal" variant="secondary" className="text-xs bg-orange-100 text-orange-700 border-orange-200">
-                              🎯 From Goal
-                            </Badge>
-                          )}
-                          
                           {/* AI Priority Indicators */}
-                          {task.aiInsights && (
+                          {isAIMode && task.aiInsights && (
                             <>
                               {task.aiInsights.isOverdue && (
                                 <Badge key="ai-overdue" variant="destructive" className="text-xs animate-pulse">
@@ -1903,7 +1762,7 @@ const Tasks = () => {
                           {/* Deadline Status Indicator */}
                           {(() => {
                             const status = getDeadlineStatus(task)
-                            return status.urgent && (
+                            return status.urgent && !isAIMode && (
                               <Badge 
                                 key="deadline-status"
                                 variant={status.text.includes('Overdue') ? 'destructive' : 'secondary'} 
@@ -1917,13 +1776,21 @@ const Tasks = () => {
                         
                         <div className="flex items-center gap-2">
                           {/* AI Priority Score */}
-                          {task.aiPriority && (
-                            <Badge key="ai-score" variant="secondary" className="text-xs bg-purple-600 text-purple-600 border-purple-200">
+                          {isAIMode && task.aiPriority && (
+                            <Badge key="ai-score" variant="secondary" className="text-xs bg-purple-50 text-purple-600 border-purple-200">
                               AI: {task.aiPriority}/100
                             </Badge>
                           )}
                           
-
+                          {/* Manual mode indicators */}
+                          {!isAIMode && (() => {
+                            const complexityInfo = getTaskComplexityInfo(task);
+                            return (
+                              <Badge key="complexity" variant="secondary" className={`text-xs ${complexityInfo.color}`}>
+                                {complexityInfo.icon} {complexityInfo.level}
+                              </Badge>
+                            );
+                          })()}
                           
                           <Badge key="priority" variant={getPriorityColor(task.priority)}>
                             {task.priority}
@@ -1950,7 +1817,7 @@ const Tasks = () => {
                       )}
                       
                       {/* AI Insights Panel */}
-                      {task.aiInsights && (task.aiInsights.priorityReason || task.aiInsights.timeRecommendation) && (
+                      {isAIMode && task.aiInsights && (task.aiInsights.priorityReason || task.aiInsights.timeRecommendation) && (
                         <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-3 mb-3">
                           <div className="flex items-start gap-2">
                             <Brain className="h-4 w-4 text-purple-600 mt-0.5 flex-shrink-0" />
@@ -2025,60 +1892,19 @@ const Tasks = () => {
                           )}
                           
                           {/* Only show reminders if task has times AND reminders are set */}
-                          {(task.startTime || task.endTime) && task.reminders && task.reminders.before > 0 && (
+                          {(task.startTime || task.endTime) && task.reminders && (task.reminders.before > 0 || task.reminders.after > 0) && (
                             <div className="flex items-center text-sm text-blue-600">
                               <Bell className="mr-1 h-3 w-3" />
-                              Reminder: {task.reminders.before}min before start
+                              Reminders: 
+                              {task.reminders.before > 0 && ` ${task.reminders.before}min before`}
+                              {task.reminders.after > 0 && ` ${task.reminders.after}min after`}
                             </div>
                           )}
                         </div>
                         
                         <div className="flex gap-1">
-                          {/* Reordering buttons */}
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              moveTaskUp(task.id);
-                            }}
-                            disabled={index === 0}
-                            className="text-muted-foreground hover:text-primary"
-                            title="Move up"
-                          >
-                            <ChevronUp className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              moveTaskDown(task.id);
-                            }}
-                            disabled={index === filteredTasks.length - 1}
-                            className="text-muted-foreground hover:text-primary"
-                            title="Move down"
-                          >
-                            <ChevronDown className="h-4 w-4" />
-                          </Button>
-
-                          {/* Mark as Completed button */}
-                          {!task.completed && (
-                            <Button
-                              size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                toggleTask(task.id);
-                              }}
-                              className="bg-green-600 hover:bg-green-700 text-white mr-2"
-                            >
-                              <Check className="h-4 w-4 mr-1" />
-                              Mark Complete
-                            </Button>
-                          )}
-
                           {/* Start Now button for top priority task */}
-                          {index === 0 && !task.completed && (
+                          {isAIMode && index === 0 && !task.completed && (
                             <Button
                               size="sm"
                               onClick={(e) => {
@@ -2086,7 +1912,7 @@ const Tasks = () => {
                                 // Navigate to Focus mode with this task
                                 window.location.href = '/focus';
                               }}
-                              className="bg-blue-600 hover:bg-blue-700 text-white mr-2"
+                              className="bg-green-600 hover:bg-green-700 text-white mr-2"
                             >
                               <Zap className="h-4 w-4 mr-1" />
                               Start Now
@@ -2288,14 +2114,15 @@ const Tasks = () => {
                   </label>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <label className="text-xs text-muted-foreground">Before Start</label>
-                      <Select 
-                        value={editingTask.reminders?.before?.toString() || "0"}
+                          reminders: {
+                            before: parseInt(value),
+                            after: editingTask.reminders?.after ?? 0
+                          }
                         onValueChange={(value) => setEditingTask({
                           ...editingTask, 
                           reminders: {
                             before: parseInt(value),
-                            after: editingTask.reminders?.after ?? 0
+                            after: editingTask.reminders?.after || 0
                           }
                         })}
                       >
@@ -2313,13 +2140,13 @@ const Tasks = () => {
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <label className="text-xs text-muted-foreground">After End</label>
+                      <label className="text-xs text-muted-foreground">After end (minutes)</label>
                       <Select 
-                        value={editingTask.reminders?.after?.toString() || "0"}
+                        value={editingTask.reminders?.after?.toString() || '0'} 
                         onValueChange={(value) => setEditingTask({
                           ...editingTask, 
                           reminders: {
-                            before: editingTask.reminders?.before ?? 0,
+                            before: editingTask.reminders?.before || 15, 
                             after: parseInt(value)
                           }
                         })}

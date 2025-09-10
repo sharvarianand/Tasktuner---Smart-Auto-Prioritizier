@@ -1,20 +1,6 @@
 const db = require('../config/firebase');
 const aiController = require('./aiController');
 
-// Cache for AI prioritization results (5 minutes)
-const prioritizationCache = new Map();
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
-
-// Cache cleanup every 10 minutes
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, value] of prioritizationCache.entries()) {
-    if (now - value.timestamp > CACHE_DURATION) {
-      prioritizationCache.delete(key);
-    }
-  }
-}, 10 * 60 * 1000);
-
 // ✅ GET all tasks for a specific user
 const getTasks = async (req, res) => {
   try {
@@ -61,14 +47,6 @@ const getPrioritizedTasks = async (req, res) => {
       return res.status(401).json({ error: "User authentication required" });
     }
 
-    // Check cache first
-    const cacheKey = `${userId}-${Date.now()}`;
-    const cachedResult = prioritizationCache.get(cacheKey);
-    if (cachedResult) {
-      console.log('✅ Returning cached prioritized tasks');
-      return res.status(200).json(cachedResult);
-    }
-
     // Get all tasks first
     const snapshot = await db.collection("tasks")
       .where("userId", "==", userId)
@@ -100,7 +78,7 @@ const getPrioritizedTasks = async (req, res) => {
     });
 
     if (activeTasks.length === 0) {
-      const result = {
+      return res.status(200).json({
         prioritizedTasks: [],
         insights: {
           summary: "All tasks completed! 🎉",
@@ -112,9 +90,7 @@ const getPrioritizedTasks = async (req, res) => {
             timeOptimizedTasks: 0
           }
         }
-      };
-      prioritizationCache.set(cacheKey, result);
-      return res.status(200).json(result);
+      });
     }
 
     // Get user context for better AI prioritization
@@ -170,7 +146,7 @@ const getPrioritizedTasks = async (req, res) => {
       }
     }));
 
-    const result = {
+    res.status(200).json({
       prioritizedTasks: enhancedTasks,
       insights: {
         summary: generateInsightsSummary(enhancedTasks),
@@ -183,9 +159,7 @@ const getPrioritizedTasks = async (req, res) => {
           focusRecommended: enhancedTasks.filter(t => t.aiInsights.requiresFocus).length
         }
       }
-    };
-    prioritizationCache.set(cacheKey, result);
-    res.status(200).json(result);
+    });
 
   } catch (error) {
     console.error("❌ Error in AI prioritization:", error);
@@ -235,7 +209,7 @@ const createTask = async (req, res) => {
       completedAt: null, // Timestamp when task was completed
       lastCompletedAt: null,
       completedDates: [], // Track completion dates for daily tasks
-      reminders: reminders || { before: 15 },
+      reminders: reminders || { before: 15, after: 0 },
       calendarEventId: null
     };
 
@@ -271,7 +245,7 @@ const createTask = async (req, res) => {
     const createdTask = { id: docRef.id, ...taskData };
 
     // Schedule notifications if reminders are set
-    if (startTime && reminders.before > 0) {
+    if (startTime && (reminders.before > 0 || reminders.after > 0)) {
       try {
         await scheduleTaskNotifications(createdTask);
       } catch (notificationError) {
@@ -323,14 +297,6 @@ const updateTask = async (req, res) => {
         updatedData.completedDates = completedDates;
         updatedData.lastCompletedAt = new Date();
         updatedData.completedAt = new Date(); // Set completion timestamp
-        
-        // For daily tasks, automatically advance dates to next day
-        if (taskData.dueDate) {
-          const currentDueDate = new Date(taskData.dueDate);
-          const nextDay = new Date(currentDueDate);
-          nextDay.setDate(nextDay.getDate() + 1);
-          updatedData.dueDate = nextDay;
-        }
         
         // For daily tasks, don't set completed to true permanently
         // Instead track the completion dates
@@ -520,7 +486,38 @@ const scheduleTaskNotifications = async (task) => {
       }
     }
     
-    // After-end notifications removed as per user request
+    // Schedule "after end" notification
+    if (task.reminders.after > 0 && task.endTime) {
+      const taskEndDateTime = new Date(`${task.dueDate.toISOString().split('T')[0]}T${task.endTime}`);
+      const afterTime = new Date(taskEndDateTime.getTime() + (task.reminders.after * 60 * 1000));
+      
+      if (afterTime > new Date()) {
+        const afterMessage = `✅ Follow-up: How did "${task.title}" go? Don't forget to mark it complete!`;
+        
+        const afterDelay = afterTime.getTime() - Date.now();
+        if (afterDelay > 0 && afterDelay < 24 * 60 * 60 * 1000) {
+          setTimeout(async () => {
+            try {
+              const notificationData = {
+                userId: task.userId,
+                message: afterMessage,
+                type: "task_followup"
+              };
+              
+              await db.collection('notifications').add({
+                ...notificationData,
+                read: false,
+                createdAt: new Date().toISOString(),
+              });
+              
+              console.log(`📢 After-end notification scheduled for task: ${task.title}`);
+            } catch (error) {
+              console.error('Error creating after-end notification:', error);
+            }
+          }, afterDelay);
+        }
+      }
+    }
   } catch (error) {
     console.error('Error scheduling task notifications:', error);
     throw error;
@@ -539,6 +536,49 @@ const reprioritizeTasks = async (req, res) => {
     console.error("❌ Error in manual reprioritization:", error);
     res.status(500).json({ error: "Failed to reprioritize tasks" });
   }
+};
+
+// ✅ Clear all tasks for user
+const clearAllTasks = async (req, res) => {
+  try {
+    const { userId } = req.body;
+    
+    if (!userId) {
+      return res.status(400).json({ error: 'User ID is required' });
+    }
+
+    // Delete all tasks for the user
+    const result = await db.collection('tasks').where('userId', '==', userId).get();
+    
+    const batch = db.batch();
+    result.forEach(doc => {
+      batch.delete(doc.ref);
+    });
+    
+    await batch.commit();
+    
+    res.status(200).json({ 
+      success: true, 
+      message: 'All tasks cleared successfully',
+      deletedCount: result.size
+    });
+    
+  } catch (error) {
+    console.error('Error clearing all tasks:', error);
+    res.status(500).json({ error: 'Failed to clear all tasks' });
+  }
+};
+
+// ✅ Export all controllers
+module.exports = {
+  getTasks,
+  createTask,
+  updateTask,
+  deleteTask,
+  getUserStats,
+  getPrioritizedTasks,
+  reprioritizeTasks,
+  clearAllTasks,
 };
 
 // Helper functions for AI prioritization
@@ -740,58 +780,4 @@ const generateRecommendations = (tasks) => {
   }
   
   return recommendations.length > 0 ? recommendations : [`Tasks well prioritized - follow the AI order for best results`];
-};
-
-// 🗑️ DELETE all tasks for a specific user
-const clearAllTasks = async (req, res) => {
-  try {
-    const userId = req.user?.id || req.headers['x-user-id'];
-    
-    if (!userId) {
-      return res.status(401).json({ error: "User authentication required" });
-    }
-
-    console.log(`🗑️ Clearing all tasks for user: ${userId}`);
-
-    // Get all tasks for the user
-    const snapshot = await db.collection("tasks")
-      .where("userId", "==", userId)
-      .get();
-      
-    if (snapshot.empty) {
-      return res.status(200).json({ message: "No tasks found to clear" });
-    }
-
-    // Delete all tasks in batches
-    const batch = db.batch();
-    const deletedCount = snapshot.size;
-    
-    snapshot.forEach(doc => {
-      batch.delete(doc.ref);
-    });
-    
-    await batch.commit();
-    
-    console.log(`✅ Successfully cleared ${deletedCount} tasks for user: ${userId}`);
-    
-    res.status(200).json({ 
-      message: `Successfully cleared ${deletedCount} tasks`,
-      deletedCount 
-    });
-  } catch (error) {
-    console.error("❌ Error clearing all tasks:", error);
-    res.status(500).json({ error: "Failed to clear all tasks" });
-  }
-};
-
-// ✅ Export all controllers
-module.exports = {
-  getTasks,
-  createTask,
-  updateTask,
-  deleteTask,
-  getUserStats,
-  getPrioritizedTasks,
-  reprioritizeTasks,
-  clearAllTasks,
 };
