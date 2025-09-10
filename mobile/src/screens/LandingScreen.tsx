@@ -7,6 +7,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../contexts/ThemeContext';
+import { CLERK_PUBLISHABLE_KEY } from '../config/constants';
 import LiveBackground from '../components/LiveBackground';
 import HeroSection from '../components/HeroSection';
 import FeaturesSection from '../components/FeaturesSection';
@@ -17,25 +18,46 @@ import RoastGenerator from '../components/RoastGenerator';
 const LandingScreen: React.FC = () => {
   const navigation = useNavigation();
   const { theme, isDark } = useTheme();
+  
+  const isClerkConfigured = CLERK_PUBLISHABLE_KEY && CLERK_PUBLISHABLE_KEY.startsWith('pk_');
 
   const handleGetStarted = () => {
-    navigation.navigate('Auth' as never);
+    if (isClerkConfigured) {
+      navigation.navigate('Auth' as never);
+    } else {
+      // Show alert or navigate to demo
+      navigation.navigate('Main' as never);
+    }
   };
 
   const handleTryDemo = () => {
-    navigation.navigate('MainTabs' as never);
+    navigation.navigate('Main' as never);
   };
 
-  const handleTryRoast = () => {};
+  const handleTryRoast = () => {
+    if (isClerkConfigured) {
+      navigation.navigate('Auth' as never);
+    } else {
+      // Show alert or navigate to demo
+      navigation.navigate('Main' as never);
+    }
+  };
   const handleScrollToFeatures = () => {};
 
-  const handleFeaturePress = (action: string) => {
+  const handleFeaturePress = (action: string, index?: number) => {
     switch (action) {
       case 'calendar':
       case 'tasks':
       case 'focus':
       case 'analytics':
-        navigation.navigate('MainTabs' as never);
+        navigation.navigate('Main' as never);
+        break;
+      case 'roast':
+        if (isClerkConfigured) {
+          navigation.navigate('Auth' as never);
+        } else {
+          navigation.navigate('Main' as never);
+        }
         break;
       default:
         break;

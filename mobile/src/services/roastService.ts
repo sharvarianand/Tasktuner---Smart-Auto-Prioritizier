@@ -1,5 +1,6 @@
 import { apiService } from './api';
 import { ApiResponse } from '../types';
+import { API_BASE_URL } from '../config/constants';
 
 export interface Roast {
   id: number;
@@ -19,26 +20,54 @@ export interface RoastResponse {
 }
 
 class RoastService {
+  // Check if backend is available (not a placeholder URL)
+  private isBackendAvailable(): boolean {
+    return !API_BASE_URL.includes('your-backend-url.com');
+  }
+
   // Get a random roast from the backend
   async getRandomRoast(): Promise<Roast> {
+    // Skip API call if backend is not configured
+    if (!this.isBackendAvailable()) {
+      if (__DEV__) {
+        console.log('Using local roast - backend not configured');
+      }
+      return this.getLocalRoast();
+    }
+
     try {
       const response = await apiService.get<ApiResponse<Roast>>('/ai/roast/random');
       return response.data;
     } catch (error) {
-      console.error('Error fetching random roast:', error);
-      // Fallback to local roasts if backend is unavailable
+      // Silently fall back to local roast in development
+      if (__DEV__) {
+        console.log('Using local roast - backend not available');
+      }
       return this.getLocalRoast();
     }
   }
 
   // Generate a custom roast based on user input
   async generateCustomRoast(request: RoastRequest): Promise<RoastResponse> {
+    // Skip API call if backend is not configured
+    if (!this.isBackendAvailable()) {
+      if (__DEV__) {
+        console.log('Using local roast - backend not configured');
+      }
+      return {
+        roast: this.getLocalRoast(),
+        suggestions: ['Backend not configured', 'Using local roast']
+      };
+    }
+
     try {
       const response = await apiService.post<ApiResponse<RoastResponse>>('/roast/generate', request);
       return response.data;
     } catch (error) {
-      console.error('Error generating custom roast:', error);
-      // Fallback to local roast
+      // Silently fall back to local roast in development
+      if (__DEV__) {
+        console.log('Using local roast - backend not available');
+      }
       return {
         roast: this.getLocalRoast(),
         suggestions: ['Try again later', 'Check your connection']
@@ -48,11 +77,22 @@ class RoastService {
 
   // Get roast statistics
   async getRoastStats(): Promise<{ totalRoasts: number; favoriteSeverity: string }> {
+    // Skip API call if backend is not configured
+    if (!this.isBackendAvailable()) {
+      if (__DEV__) {
+        console.log('Using default roast stats - backend not configured');
+      }
+      return { totalRoasts: 0, favoriteSeverity: 'medium' };
+    }
+
     try {
       const response = await apiService.get<ApiResponse<{ totalRoasts: number; favoriteSeverity: string }>>('/roast/stats');
       return response.data;
     } catch (error) {
-      console.error('Error fetching roast stats:', error);
+      // Silently fall back to defaults in development
+      if (__DEV__) {
+        console.log('Using default roast stats - backend not available');
+      }
       return { totalRoasts: 0, favoriteSeverity: 'medium' };
     }
   }

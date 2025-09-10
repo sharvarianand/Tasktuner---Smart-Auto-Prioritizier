@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import {
   View,
   Text,
@@ -63,10 +63,32 @@ const FeaturesSection: React.FC<FeaturesSectionProps> = ({ onFeaturePress }) => 
     }
   ];
 
-  const handleFeaturePress = (action: string) => {
+  const animatedValues = useRef(
+    features.map(() => new Animated.Value(1))
+  ).current;
+
+  const handleFeaturePress = (action: string, index: number) => {
     if (onFeaturePress) {
       onFeaturePress(action);
     }
+  };
+
+  const handlePressIn = (index: number) => {
+    Animated.spring(animatedValues[index], {
+      toValue: 0.95,
+      useNativeDriver: false,
+      tension: 300,
+      friction: 10,
+    }).start();
+  };
+
+  const handlePressOut = (index: number) => {
+    Animated.spring(animatedValues[index], {
+      toValue: 1,
+      useNativeDriver: false,
+      tension: 300,
+      friction: 10,
+    }).start();
   };
 
   return (
@@ -90,16 +112,26 @@ const FeaturesSection: React.FC<FeaturesSectionProps> = ({ onFeaturePress }) => 
           {features.map((feature, index) => (
             <Animated.View
               key={feature.title}
-              style={styles.featureCard}
+              style={[
+                styles.featureCard,
+                {
+                  transform: [{ scale: animatedValues[index] }],
+                }
+              ]}
             >
               <TouchableOpacity
-                onPress={() => handleFeaturePress(feature.action)}
-                activeOpacity={0.7}
+                onPress={() => handleFeaturePress(feature.action, index)}
+                onPressIn={() => handlePressIn(index)}
+                onPressOut={() => handlePressOut(index)}
+                activeOpacity={0.8}
               >
-                <Card style={[styles.card, { 
-                  backgroundColor: theme.colors.surface,
-                  borderColor: isDark ? '#374151' : '#e5e7eb'
-                }]}>
+                <Card 
+                  variant="glass"
+                  style={[styles.card, { 
+                    backgroundColor: theme.colors.surface,
+                    borderColor: isDark ? '#374151' : '#e5e7eb'
+                  }]}
+                >
                   <View style={styles.cardContent}>
                     <View style={[styles.iconContainer, { 
                       backgroundColor: theme.colors.primary + '20' 

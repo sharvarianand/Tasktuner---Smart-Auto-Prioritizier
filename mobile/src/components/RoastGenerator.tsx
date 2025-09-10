@@ -5,6 +5,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   Alert,
+  Platform,
 } from 'react-native';
 import { useTheme } from '../contexts/ThemeContext';
 import { useVoice } from '../contexts/VoiceContext';
@@ -70,7 +71,7 @@ const RoastGenerator: React.FC<RoastGeneratorProps> = ({
     Animated.timing(fadeAnim, {
       toValue: 0.3,
       duration: 150,
-      useNativeDriver: true,
+      useNativeDriver: Platform.OS !== 'web',
     }).start(() => {
       // Load new roast
       loadRoast().then(() => {
@@ -78,7 +79,7 @@ const RoastGenerator: React.FC<RoastGeneratorProps> = ({
         Animated.timing(fadeAnim, {
           toValue: 1,
           duration: 150,
-          useNativeDriver: true,
+          useNativeDriver: Platform.OS !== 'web',
         }).start(() => {
           setIsAnimating(false);
         });
@@ -144,7 +145,7 @@ const RoastGenerator: React.FC<RoastGeneratorProps> = ({
   return (
     <View style={styles.container}>
       <Animated.View style={{ opacity: fadeAnim }}>
-        <Card style={styles.card}>
+        <Card style={styles.card} variant="glass">
           <View style={styles.header}>
             <View style={styles.iconContainer}>
               <View style={[styles.iconBackground, { backgroundColor: theme.colors.primary + '20' }]}>

@@ -39,14 +39,14 @@ const CalendarScreen: React.FC = () => {
           Calendar
         </Text>
         
-        <Card style={styles.calendarCard}>
+        <Card style={styles.calendarCard} variant="glass">
           <Text style={[styles.placeholderText, { color: theme.colors.textSecondary }]}>
             Calendar view coming soon...
           </Text>
         </Card>
 
         {selectedDate && (
-          <Card style={styles.eventsCard}>
+          <Card style={styles.eventsCard} variant="glass">
             <Text style={[styles.eventsTitle, { color: theme.colors.text }]}>
               Events for {selectedDate}
             </Text>

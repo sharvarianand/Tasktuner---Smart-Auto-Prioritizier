@@ -8,10 +8,10 @@ const apiBaseFromExtra = (Constants as any)?.expoConfig?.extra?.apiBaseUrl
 const apiBaseFromEnv = process.env.EXPO_PUBLIC_API_BASE_URL;
 
 function resolveLocalDefaultBaseUrl(): string {
-  // Android emulator uses 10.0.2.2 to access host machine; iOS simulator can use 127.0.0.1
   if (__DEV__) {
     if (Platform.OS === 'android') return 'http://10.0.2.2:3001/api';
     if (Platform.OS === 'ios') return 'http://127.0.0.1:3001/api';
+    if (Platform.OS === 'web') return 'http://localhost:3001/api';
   }
   return 'https://your-backend-url.com/api';
 }
@@ -55,22 +55,22 @@ export const APP_CONFIG = {
 // Theme Configuration
 export const THEME_CONFIG = {
   light: {
-    primary: '#0ea5e9',
-    secondary: '#d946ef',
-    accent: '#f97316',
-    background: '#ffffff',
-    surface: '#f8fafc',
-    text: '#1f2937',
-    textSecondary: '#6b7280',
+    primary: '#8b5cf6', // violet-500
+    secondary: '#a78bfa', // violet-400
+    accent: '#22d3ee', // cyan-400
+    background: '#f8fafc', // slate-50
+    surface: '#ffffff',
+    text: '#0f172a', // slate-900
+    textSecondary: '#475569', // slate-600
   },
   dark: {
-    primary: '#38bdf8',
-    secondary: '#e879f9',
-    accent: '#fb923c',
-    background: '#0f172a',
-    surface: '#1e293b',
-    text: '#f1f5f9',
-    textSecondary: '#94a3b8',
+    primary: '#8b5cf6', // violet-500
+    secondary: '#a78bfa', // violet-400
+    accent: '#22d3ee', // cyan-400
+    background: '#0b1020', // deep navy
+    surface: '#13172b', // slightly lighter navy
+    text: '#e2e8f0', // slate-200
+    textSecondary: '#94a3b8', // slate-400
   },
 };
 

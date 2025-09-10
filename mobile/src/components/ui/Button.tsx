@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import {
   TouchableOpacity,
   Text,
@@ -7,6 +7,10 @@ import {
   TextStyle,
   ActivityIndicator,
   View,
+  Animated,
+  Easing,
+  Platform,
+  Vibration,
 } from 'react-native';
 import { useTheme } from '../../contexts/ThemeContext';
 
@@ -34,25 +38,52 @@ const Button: React.FC<ButtonProps> = ({
   icon,
 }) => {
   const { theme } = useTheme();
+  const scale = useRef(new Animated.Value(1)).current;
+  const shimmer = useRef(new Animated.Value(0)).current;
+
+  const onPressIn = () => {
+    Animated.spring(scale, { toValue: 0.98, useNativeDriver: Platform.OS !== 'web', speed: 50, bounciness: 6 }).start();
+  };
+  const onPressOut = () => {
+    Animated.spring(scale, { toValue: 1, useNativeDriver: Platform.OS !== 'web', speed: 50, bounciness: 6 }).start();
+  };
+
+  const handlePress = () => {
+    if (Platform.OS !== 'web') {
+      Vibration.vibrate(10);
+    }
+    onPress();
+  };
+
+  React.useEffect(() => {
+    const loop = Animated.loop(
+      Animated.timing(shimmer, {
+        toValue: 1,
+        duration: 2000,
+        easing: Easing.inOut(Easing.quad),
+        useNativeDriver: Platform.OS !== 'web',
+      })
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [shimmer]);
 
   const getButtonStyle = (): ViewStyle => {
     const baseStyle: ViewStyle = {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
-      borderRadius: 12,
+      borderRadius: 14,
       borderWidth: 1,
-      gap: 8,
+      overflow: 'hidden',
     };
 
-    // Size styles
     const sizeStyles = {
       small: { paddingHorizontal: 12, paddingVertical: 8, minHeight: 36 },
       medium: { paddingHorizontal: 16, paddingVertical: 12, minHeight: 44 },
       large: { paddingHorizontal: 20, paddingVertical: 16, minHeight: 52 },
     };
 
-    // Variant styles
     const variantStyles = {
       primary: {
         backgroundColor: theme.colors.primary,
@@ -82,8 +113,9 @@ const Button: React.FC<ButtonProps> = ({
 
   const getTextStyle = (): TextStyle => {
     const baseStyle: TextStyle = {
-      fontWeight: '600',
+      fontWeight: '700',
       textAlign: 'center',
+      letterSpacing: 0.3,
     };
 
     const sizeStyles = {
@@ -111,44 +143,60 @@ const Button: React.FC<ButtonProps> = ({
     const iconSize = size === 'small' ? 14 : size === 'large' ? 20 : 16;
 
     if (!icon) return null;
-
-    // If already a valid element, render as is
     if (React.isValidElement(icon)) {
-      return <View style={{ marginRight: 4 }}>{icon}</View>;
+      return <View style={{ marginRight: 8 }}>{icon}</View>;
     }
-
-    // If a component type was provided, create an element
     if (typeof icon === 'function') {
       const IconComponent = icon as React.ComponentType<{ size?: number; color?: string }>;
       return (
-        <View style={{ marginRight: 4 }}>
+        <View style={{ marginRight: 8 }}>
           {React.createElement(IconComponent, { size: iconSize, color: iconColor })}
         </View>
       );
     }
-
     return null;
   };
 
+  const shimmerTranslate = shimmer.interpolate({ inputRange: [0, 1], outputRange: [-100, 200] });
+  const textColor = (variant === 'outline' || variant === 'ghost') ? theme.colors.primary : '#ffffff';
+
   return (
-    <TouchableOpacity
-      style={[getButtonStyle(), style]}
-      onPress={onPress}
-      disabled={disabled || loading}
-      activeOpacity={0.7}
-    >
-      {loading ? (
-        <ActivityIndicator
-          size="small"
-          color={variant === 'outline' || variant === 'ghost' ? theme.colors.primary : '#ffffff'}
-        />
-      ) : (
-        <>
-          {renderIcon()}
-          <Text style={[getTextStyle(), textStyle]}>{title}</Text>
-        </>
-      )}
-    </TouchableOpacity>
+    <Animated.View style={{ transform: [{ scale }] }}>
+      <TouchableOpacity
+        style={[getButtonStyle(), style]}
+        onPress={handlePress}
+        disabled={disabled || loading}
+        activeOpacity={0.85}
+        onPressIn={onPressIn}
+        onPressOut={onPressOut}
+      >
+        {loading ? (
+          <ActivityIndicator
+            size="small"
+            color={variant === 'outline' || variant === 'ghost' ? theme.colors.primary : '#ffffff'}
+          />
+        ) : (
+          <>
+            {renderIcon()}
+            <Text style={[getTextStyle(), textStyle]}>{title}</Text>
+            {(variant === 'primary' || variant === 'secondary') && (
+              <Animated.View
+                style={{
+                  pointerEvents: 'none',
+                  position: 'absolute',
+                  top: 0,
+                  bottom: 0,
+                  width: 80,
+                  transform: [{ translateX: shimmerTranslate }],
+                  backgroundColor: textColor,
+                  opacity: 0.08,
+                }}
+              />
+            )}
+          </>
+        )}
+      </TouchableOpacity>
+    </Animated.View>
   );
 };
 

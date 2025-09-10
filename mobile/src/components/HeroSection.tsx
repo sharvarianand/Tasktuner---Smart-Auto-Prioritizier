@@ -4,11 +4,11 @@ import {
   Text,
   StyleSheet,
   Dimensions,
+  Image,
 } from 'react-native';
 import { useTheme } from '../contexts/ThemeContext';
 import Button from './ui/Button';
 import Badge from './ui/Badge';
-import Logo3D from './Logo3D';
 import { ArrowRight, ChevronDown } from 'lucide-react-native';
 import { Animated } from 'react-native';
 
@@ -41,9 +41,9 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 
         {/* Main Title */}
         <View style={styles.titleContainer}>
-          <Text style={[styles.title, { color: theme.colors.text }]}>
+          <Text style={[styles.title, { color: theme.colors.text }]}> 
             Welcome to{' '}
-            <Text style={[styles.titleAccent, { color: theme.colors.primary }]}>
+            <Text style={[styles.titleAccent, { color: theme.colors.primary }]}> 
               TaskTuner!
             </Text>
           </Text>
@@ -51,7 +51,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
 
         {/* Subtitle */}
         <View style={styles.subtitleContainer}>
-          <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]}>
+          <Text style={[styles.subtitle, { color: theme.colors.textSecondary }]}> 
             The savage AI productivity coach that schedules your tasks, 
             syncs your calendar, and roasts your excuses into oblivion.
           </Text>
@@ -77,22 +77,20 @@ const HeroSection: React.FC<HeroSectionProps> = ({
           />
         </View>
 
-        {/* 3D Logo Display */}
+        {/* Hero Image */}
         <View style={styles.logoContainer}>
           <Animated.View style={styles.logoWrapper}>
-            <Logo3D 
-              size="xl" 
-              variant="hero" 
-              animated={true} 
-              showText={false}
-              onActionClick={onLogoAction}
+            <Image
+              source={require('../../assets/images/Tasktuner_logo.png')}
+              resizeMode="contain"
+              style={{ width: 180, height: 180, borderRadius: 24, opacity: 0.95 }}
             />
           </Animated.View>
         </View>
 
         {/* Scroll Indicator */}
         <View style={styles.scrollIndicator}>
-          <Text style={[styles.scrollText, { color: theme.colors.textSecondary }]}>
+          <Text style={[styles.scrollText, { color: theme.colors.textSecondary }]}> 
             Scroll to explore
           </Text>
           <ChevronDown 
@@ -167,10 +165,10 @@ const styles = StyleSheet.create({
     maxWidth: 300,
   },
   logoWrapper: {
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+    width: 220,
+    height: 220,
+    borderRadius: 110,
+    backgroundColor: 'rgba(59, 130, 246, 0.10)',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,

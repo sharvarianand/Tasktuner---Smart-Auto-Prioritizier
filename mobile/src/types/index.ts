@@ -202,9 +202,8 @@ export type AuthStackParamList = {
 export type MainTabParamList = {
   Tasks: undefined;
   Calendar: undefined;
-  Goals: undefined;
   Analytics: undefined;
-  Leaderboard: undefined;
+  Profile: undefined;
   Settings: undefined;
 };
 
