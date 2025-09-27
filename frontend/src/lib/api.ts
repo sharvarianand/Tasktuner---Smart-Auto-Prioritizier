@@ -186,4 +186,78 @@ export const taskApi = {
   },
 };
 
+// Goal API functions
+export const goalApi = {
+  // Get all goals for user
+  getGoals: async () => {
+    try {
+      return await apiClient('/goals');
+    } catch (error) {
+      console.error('Failed to get goals:', error);
+      // Return empty array on error
+      return [];
+    }
+  },
+
+  // Create a new goal
+  createGoal: async (goal: {
+    title: string;
+    description?: string;
+    category: 'Academic' | 'Personal' | 'Work' | 'Health' | 'Career';
+    targetDate?: string;
+  }) => {
+    try {
+      return await apiClient('/goals', {
+        method: 'POST',
+        body: JSON.stringify(goal),
+      });
+    } catch (error) {
+      console.error('Failed to create goal:', error);
+      throw error;
+    }
+  },
+
+  // Update a goal
+  updateGoal: async (goalId: string, updates: {
+    title?: string;
+    description?: string;
+    category?: 'Academic' | 'Personal' | 'Work' | 'Health' | 'Career';
+    targetDate?: string;
+    progress?: number;
+    status?: 'active' | 'completed' | 'paused' | 'cancelled';
+  }) => {
+    try {
+      return await apiClient(`/goals/${goalId}`, {
+        method: 'PUT',
+        body: JSON.stringify(updates),
+      });
+    } catch (error) {
+      console.error('Failed to update goal:', error);
+      throw error;
+    }
+  },
+
+  // Delete a goal
+  deleteGoal: async (goalId: string) => {
+    try {
+      return await apiClient(`/goals/${goalId}`, {
+        method: 'DELETE',
+      });
+    } catch (error) {
+      console.error('Failed to delete goal:', error);
+      throw error;
+    }
+  },
+
+  // Get goal with tasks
+  getGoalWithTasks: async (goalId: string) => {
+    try {
+      return await apiClient(`/goals/${goalId}/tasks`);
+    } catch (error) {
+      console.error('Failed to get goal with tasks:', error);
+      throw error;
+    }
+  },
+};
+
 export default apiClient;

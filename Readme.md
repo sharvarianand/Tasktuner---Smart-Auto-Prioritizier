@@ -18,6 +18,7 @@ TaskTuner turns tasks into execution. Add tasks via text or voice, let AI autoâ€
 ## Tech Stack
 - **Frontend**: React 18 + Vite, TypeScript, Tailwind, Framer Motion
 - **Backend**: Node.js, Express
+- **Mobile**: React Native + Expo SDK 54
 - **Infra**: Firebase, OpenAI API, Google Calendar API, Clerk (auth)
 
 ## Quick Start
@@ -28,6 +29,7 @@ cd "Tasktuner - Smart Auto Prioritizer"
 
 cd frontend && npm install
 cd ../backend && npm install
+cd ../mobile && npm install
 ```
 
 2) Env vars
@@ -55,6 +57,9 @@ cd frontend && npm run dev
 
 # Backend (http://localhost:3001)
 cd ../backend && npm run dev
+
+# Mobile (Expo SDK 54)
+cd ../mobile && npm start
 ```
 
 ## Focus Mode
@@ -63,6 +68,7 @@ Stay in flow while executing prioritized tasks. Includes session timer, subtle a
 ## Deployment
 - Frontend: Netlify or Vercel (build in `frontend`)
 - Backend: Render (deploy `backend`)
+- Mobile: Expo Application Services (EAS) - see `mobile/SDK_54_MIGRATION.md`
 
 ## License
 MIT â€” see `LICENSE`.
