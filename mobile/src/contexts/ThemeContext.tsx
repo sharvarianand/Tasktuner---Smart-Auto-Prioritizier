@@ -9,6 +9,7 @@ interface ThemeContextType {
   toggleTheme: () => void;
   setTheme: (theme: Theme) => void;
   isDark: boolean;
+  clearThemeStorage: () => Promise<void>;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -46,11 +47,37 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     try {
       const savedTheme = await AsyncStorage.getItem(STORAGE_KEYS.theme);
       if (savedTheme) {
-        const parsedTheme = JSON.parse(savedTheme);
-        setThemeState(parsedTheme);
+        // Handle case where theme might be stored as just a string (legacy data)
+        if (savedTheme === 'light' || savedTheme === 'dark' || savedTheme === 'system') {
+          console.log('Found legacy theme format, converting to new format');
+          const legacyTheme: Theme = {
+            mode: savedTheme as 'light' | 'dark' | 'system',
+            colors: THEME_CONFIG.light, // Will be updated by updateThemeColors
+          };
+          setThemeState(legacyTheme);
+          // Save the corrected format
+          await AsyncStorage.setItem(STORAGE_KEYS.theme, JSON.stringify(legacyTheme));
+        } else {
+          // Try to parse as JSON
+          const parsedTheme = JSON.parse(savedTheme);
+          // Validate the parsed theme has the expected structure
+          if (parsedTheme && typeof parsedTheme === 'object' && parsedTheme.mode) {
+            setThemeState(parsedTheme);
+          } else {
+            console.log('Invalid theme format, using default');
+            // Clear the corrupted data
+            await AsyncStorage.removeItem(STORAGE_KEYS.theme);
+          }
+        }
       }
     } catch (error) {
       console.error('Error loading theme:', error);
+      // Clear any corrupted data
+      try {
+        await AsyncStorage.removeItem(STORAGE_KEYS.theme);
+      } catch (clearError) {
+        console.error('Error clearing corrupted theme data:', clearError);
+      }
     }
   };
 
@@ -79,11 +106,26 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     });
   };
 
+  const clearThemeStorage = async () => {
+    try {
+      await AsyncStorage.removeItem(STORAGE_KEYS.theme);
+      // Reset to default theme
+      const defaultTheme: Theme = {
+        mode: 'system',
+        colors: THEME_CONFIG.light,
+      };
+      setThemeState(defaultTheme);
+    } catch (error) {
+      console.error('Error clearing theme storage:', error);
+    }
+  };
+
   const value: ThemeContextType = {
     theme,
     toggleTheme,
     setTheme,
     isDark,
+    clearThemeStorage,
   };
 
   return (

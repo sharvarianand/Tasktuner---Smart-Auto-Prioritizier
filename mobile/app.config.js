@@ -17,7 +17,8 @@ export default {
     ios: {
       supportsTablet: true,
       bundleIdentifier: 'com.yourcompany.tasktuner',
-      buildNumber: '1.0.0'
+      buildNumber: '1.0.0',
+      newArchEnabled: true
     },
     android: {
       adaptiveIcon: {
@@ -25,18 +26,33 @@ export default {
         backgroundColor: '#ffffff'
       },
       package: 'com.yourcompany.tasktuner',
-      versionCode: 1
+      versionCode: 1,
+      newArchEnabled: true
     },
     web: {
-      favicon: './assets/images/Tasktuner_logo.png'
+      favicon: './assets/images/Tasktuner_logo.png',
+      bundler: 'metro',
+      output: 'static'
     },
     extra: {
       clerkPublishableKey: process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY,
+      apiBaseUrl: process.env.EXPO_PUBLIC_API_BASE_URL,
       eas: {
         projectId: 'your-project-id'
       }
     },
+    updates: {
+      enabled: false,
+      checkAutomatically: 'NEVER',
+      fallbackToCacheTimeout: 0,
+      url: null
+    },
+    scheme: 'tasktuner',
     plugins: [
+      'expo-font',
+      'expo-router',
+      'expo-secure-store',
+      'expo-web-browser',
       [
         'expo-notifications',
         {

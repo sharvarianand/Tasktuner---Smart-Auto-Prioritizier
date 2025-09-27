@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
 } from 'react-native';
 import { useTheme } from '../contexts/ThemeContext';
 import Card from './ui/Card';
@@ -24,10 +23,10 @@ interface Feature {
 }
 
 interface FeaturesSectionProps {
-  onFeaturePress?: (action: string) => void;
+  // No props needed - cards are now just for display
 }
 
-const FeaturesSection: React.FC<FeaturesSectionProps> = ({ onFeaturePress }) => {
+const FeaturesSection: React.FC<FeaturesSectionProps> = () => {
   const { theme, isDark } = useTheme();
 
   const features: Feature[] = [
@@ -68,9 +67,7 @@ const FeaturesSection: React.FC<FeaturesSectionProps> = ({ onFeaturePress }) => 
   ).current;
 
   const handleFeaturePress = (action: string, index: number) => {
-    if (onFeaturePress) {
-      onFeaturePress(action);
-    }
+    // No action needed - cards are now just for display
   };
 
   const handlePressIn = (index: number) => {
@@ -119,18 +116,14 @@ const FeaturesSection: React.FC<FeaturesSectionProps> = ({ onFeaturePress }) => 
                 }
               ]}
             >
-              <TouchableOpacity
-                onPress={() => handleFeaturePress(feature.action, index)}
-                onPressIn={() => handlePressIn(index)}
-                onPressOut={() => handlePressOut(index)}
-                activeOpacity={0.8}
+              <View
+                onTouchStart={() => handlePressIn(index)}
+                onTouchEnd={() => handlePressOut(index)}
+                onTouchCancel={() => handlePressOut(index)}
               >
                 <Card 
                   variant="glass"
-                  style={[styles.card, { 
-                    backgroundColor: theme.colors.surface,
-                    borderColor: isDark ? '#374151' : '#e5e7eb'
-                  }]}
+                  style={styles.card}
                 >
                   <View style={styles.cardContent}>
                     <View style={[styles.iconContainer, { 
@@ -151,7 +144,7 @@ const FeaturesSection: React.FC<FeaturesSectionProps> = ({ onFeaturePress }) => 
                     </Text>
                   </View>
                 </Card>
-              </TouchableOpacity>
+              </View>
             </Animated.View>
           ))}
         </View>

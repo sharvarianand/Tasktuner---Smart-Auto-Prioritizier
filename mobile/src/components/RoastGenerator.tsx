@@ -7,9 +7,11 @@ import {
   Alert,
   Platform,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../contexts/ThemeContext';
 import { useVoice } from '../contexts/VoiceContext';
 import { roastService, Roast } from '../services/roastService';
+import { CLERK_PUBLISHABLE_KEY } from '../config/constants';
 import Card from './ui/Card';
 import Button from './ui/Button';
 import Badge from './ui/Badge';
@@ -20,7 +22,7 @@ import {
   Clock, 
   RefreshCw, 
   Volume2, 
-  VolumeX 
+  VolumeX
 } from 'lucide-react-native';
 import { Animated } from 'react-native';
 
@@ -35,12 +37,16 @@ const RoastGenerator: React.FC<RoastGeneratorProps> = ({
 }) => {
   const { theme, isDark } = useTheme();
   const { speak, stopSpeaking, isSpeaking } = useVoice();
+  const navigation = useNavigation();
   const [currentRoast, setCurrentRoast] = useState<Roast | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const [fadeAnim] = useState(new Animated.Value(1));
+  const [roastCount, setRoastCount] = useState(0);
 
-  // Load initial roast
+  const isClerkConfigured = CLERK_PUBLISHABLE_KEY && CLERK_PUBLISHABLE_KEY.startsWith('pk_');
+
+  // Load initial roast and check backend status
   useEffect(() => {
     loadRoast();
   }, []);
@@ -50,6 +56,12 @@ const RoastGenerator: React.FC<RoastGeneratorProps> = ({
       setIsLoading(true);
       const roast = await roastService.getRandomRoast();
       setCurrentRoast(roast);
+      
+      // Track that this roast was viewed
+      if (roast.id) {
+        await roastService.trackRoastInteraction(roast.id, 'viewed');
+      }
+      
     } catch (error) {
       console.error('Error loading roast:', error);
       // Fallback to local roast
@@ -66,6 +78,11 @@ const RoastGenerator: React.FC<RoastGeneratorProps> = ({
   const generateNewRoast = async () => {
     setIsAnimating(true);
     stopSpeaking();
+    
+    // Track regeneration of current roast
+    if (currentRoast?.id) {
+      await roastService.trackRoastInteraction(currentRoast.id, 'regenerated');
+    }
 
     // Fade out animation
     Animated.timing(fadeAnim, {
@@ -75,6 +92,7 @@ const RoastGenerator: React.FC<RoastGeneratorProps> = ({
     }).start(() => {
       // Load new roast
       loadRoast().then(() => {
+        setRoastCount(prev => prev + 1);
         // Fade in animation
         Animated.timing(fadeAnim, {
           toValue: 1,
@@ -87,12 +105,33 @@ const RoastGenerator: React.FC<RoastGeneratorProps> = ({
     });
   };
 
-  const handleSpeakRoast = () => {
+  const handleSpeakRoast = async () => {
     if (currentRoast && !isSpeaking) {
       speak(currentRoast.message);
+      // Track that this roast was spoken
+      if (currentRoast.id) {
+        await roastService.trackRoastInteraction(currentRoast.id, 'spoken');
+      }
     } else if (isSpeaking) {
       stopSpeaking();
     }
+  };
+
+  const handleStartBeingProductive = async () => {
+    // Track the button click
+    await roastService.trackRoastInteraction(currentRoast?.id || 0, 'shared');
+    
+    if (isClerkConfigured) {
+      navigation.navigate('Auth' as never);
+    } else {
+      navigation.navigate('Main' as never);
+    }
+  };
+
+  const handleTryDemoAction = async () => {
+    // Track the button click
+    await roastService.trackRoastInteraction(currentRoast?.id || 0, 'shared');
+    navigation.navigate('Main' as never);
   };
 
   const getSeverityColor = (severity: string) => {
@@ -176,7 +215,7 @@ const RoastGenerator: React.FC<RoastGeneratorProps> = ({
                   variant="outline"
                   size="medium"
                   disabled={isLoading || isAnimating}
-                  icon={RefreshCw}
+                  icon={(props) => <RefreshCw {...props} />}
                   style={styles.button}
                 />
                 
@@ -185,31 +224,20 @@ const RoastGenerator: React.FC<RoastGeneratorProps> = ({
                   onPress={handleSpeakRoast}
                   variant="outline"
                   size="medium"
-                  icon={isSpeaking ? VolumeX : Volume2}
+                  icon={(props) => isSpeaking ? <VolumeX {...props} /> : <Volume2 {...props} />}
                   style={styles.button}
                 />
               </View>
               
               <View style={styles.ctaRow}>
-                {onSignUp ? (
-                  <Button
-                    title="Start Being Productive"
-                    onPress={onSignUp}
-                    variant="primary"
-                    size="large"
-                    icon={Zap}
-                    style={styles.ctaButton}
-                  />
-                ) : onTryDemo ? (
-                  <Button
-                    title="Try Demo"
-                    onPress={onTryDemo}
-                    variant="primary"
-                    size="large"
-                    icon={Zap}
-                    style={styles.ctaButton}
-                  />
-                ) : null}
+                <Button
+                  title={isClerkConfigured ? "Start Being Productive" : "Try Demo"}
+                  onPress={isClerkConfigured ? handleStartBeingProductive : handleTryDemoAction}
+                  variant="primary"
+                  size="large"
+                  icon={(props) => <Zap {...props} />}
+                  style={styles.ctaButton}
+                />
               </View>
             </View>
           </View>
@@ -218,7 +246,10 @@ const RoastGenerator: React.FC<RoastGeneratorProps> = ({
 
       <View style={styles.footer}>
         <Text style={[styles.footerText, { color: theme.colors.textSecondary }]}>
-          Ready to turn that roast into real results? Sign up to access the full TaskTuner experience!
+          {roastCount > 0 
+            ? `You've been roasted ${roastCount + 1} times! Ready to turn that into real results?`
+            : "Ready to turn that roast into real results? Sign up to access the full TaskTuner experience!"
+          }
         </Text>
       </View>
     </View>

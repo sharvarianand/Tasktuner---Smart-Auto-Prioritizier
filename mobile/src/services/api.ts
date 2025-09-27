@@ -3,6 +3,35 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_BASE_URL, ERROR_MESSAGES } from '../config/constants';
 import { ApiResponse, PaginatedResponse } from '../types';
 
+export async function fetchJson<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const res = await fetch(`${API_BASE_URL}${path}`, {
+    headers: { "Content-Type": "application/json", ...(options.headers || {}) },
+    ...options,
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`API ${res.status} ${res.statusText} ${text}`);
+  }
+  return res.json() as Promise<T>;
+}
+
+export async function pingBackend(timeoutMs = 3000): Promise<{ ok: boolean; message?: string }> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    // Backend health is served at '/'
+    const base = API_BASE_URL.replace(/\/?api\/?$/, "");
+    const res = await fetch(`${base}/`, { signal: controller.signal });
+    clearTimeout(timeout);
+    if (!res.ok) return { ok: false, message: `HTTP ${res.status}` };
+    const text = await res.text().catch(() => "");
+    return { ok: true, message: text };
+  } catch (e: any) {
+    clearTimeout(timeout);
+    return { ok: false, message: e?.message || "Network error" };
+  }
+}
+
 class ApiService {
   private api: AxiosInstance;
   private token: string | null = null;

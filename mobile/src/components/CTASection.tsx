@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
 } from 'react-native';
+import { pingBackend } from '../services/api';
 import { useTheme } from '../contexts/ThemeContext';
 import Button from './ui/Button';
 import { CheckCircle } from 'lucide-react-native';
@@ -15,11 +16,40 @@ interface CTASectionProps {
 
 const CTASection: React.FC<CTASectionProps> = ({ onGetStarted }) => {
   const { theme, isDark } = useTheme();
+  const [backendOk, setBackendOk] = useState<boolean | null>(null);
+  const [backendMsg, setBackendMsg] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      const res = await pingBackend(2500);
+      if (!mounted) return;
+      setBackendOk(res.ok);
+      setBackendMsg(res.message);
+    })();
+    return () => { mounted = false; };
+  }, []);
 
   return (
     <View style={[styles.container, { 
       backgroundColor: isDark ? 'rgba(59, 130, 246, 0.1)' : 'rgba(59, 130, 246, 0.05)' 
     }]}>
+      {backendOk !== null && (
+        <View style={{
+          alignSelf: 'center',
+          marginBottom: 12,
+          paddingVertical: 6,
+          paddingHorizontal: 10,
+          borderRadius: 8,
+          borderWidth: 1,
+          borderColor: backendOk ? '#16A34A' : '#DC2626',
+          backgroundColor: backendOk ? '#DCFCE7' : '#FEE2E2',
+        }}>
+          <Text style={{ color: backendOk ? '#166534' : '#991B1B', fontWeight: '600' }}>
+            {backendOk ? 'Backend Connected' : 'Backend Unreachable'}{backendMsg ? ` · ${backendMsg}` : ''}
+          </Text>
+        </View>
+      )}
       <View style={styles.content}>
         <View style={styles.header}>
           <Text style={[styles.title, { color: theme.colors.text }]}>
