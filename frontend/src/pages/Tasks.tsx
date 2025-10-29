@@ -121,6 +121,7 @@ interface PrioritizedTasksResponse {
 }
 
 interface UserStats {
+  activeTasks: number
   tasksCompleted: number
   totalTasks: number
   currentStreak: number
@@ -175,6 +176,7 @@ const Tasks = () => {
   
   const [tasks, setTasks] = useState<Task[]>([])
   const [userStats, setUserStats] = useState<UserStats>({
+    activeTasks: 0,
     tasksCompleted: 0,
     totalTasks: 0,
     currentStreak: 0,
@@ -1209,7 +1211,7 @@ const Tasks = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Total Tasks</p>
-                  <p className="text-2xl font-bold">{userStats.totalTasks}</p>
+                  <p className="text-2xl font-bold">{userStats.activeTasks ?? userStats.totalTasks}</p>
                 </div>
                 <CheckCircle className="h-8 w-8 text-primary" />
               </div>

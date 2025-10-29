@@ -1,6 +1,74 @@
 const db = require('../config/firebase');
 const aiController = require('./aiController');
 
+// Local enhanced prioritization fallback (simple heuristic scorer)
+function scoreTask(task, userStats) {
+  // Urgency: due date within 1 day = max, overdue = extra bonus
+  const now = new Date();
+  let urgency = 0;
+  if (task.dueDate) {
+    const dueDate = new Date(task.dueDate);
+    const daysUntilDue = (dueDate - now) / (1000 * 60 * 60 * 24);
+    if (daysUntilDue < 0) urgency = 1.2; // overdue boost
+    else urgency = 1 - Math.min(daysUntilDue / 7, 1); // less days, higher score
+  }
+
+  // Importance: assign numeric weights
+  const importanceMap = {High: 1, Medium: 0.5, Low: 0.2};
+  const importance = importanceMap[task.priority] || 0.2;
+
+  // Effort: estimate by description keywords (basic NLP)
+  const complexKeywords = ["research", "analyze", "create", "develop", "design", "write", "study", "learn", "plan", "organize", "project"];
+  const text = ((task.title || '') + ' ' + (task.description || '')).toLowerCase();
+  let effort = complexKeywords.some(word => text.includes(word)) ? 0.4 : 0.8; // higher effort, lower score
+
+  // Productivity fit: reward tasks scheduled during user's high productivity (assume early morning is best)
+  let productivityFit = 0.5;
+  if (task.startTime) {
+    const hour = Number(task.startTime.split(":")[0]);
+    if (hour >= 6 && hour <= 11) productivityFit = 1;
+    else if (hour >= 12 && hour <= 17) productivityFit = 0.7;
+    else productivityFit = 0.4;
+  }
+
+  // Historical Success: reward tasks user tends to complete on time (ex: streak, category completion)
+  // Example: scale by user's completion streak
+  const successHistory = (userStats && (userStats.currentStreak || 0) > 5) ? 1 : 0.5;
+
+  // Combine with weights (tune weights as desired)
+  return (
+    urgency * 0.35 +
+    importance * 0.3 +
+    effort * 0.05 +
+    productivityFit * 0.2 +
+    successHistory * 0.1
+  );
+}
+
+function enhancedPrioritizeTasks(tasks, userStats) {
+  // Score all tasks
+  const scoredTasks = tasks.map(task => ({
+    ...task,
+    aiPriority: scoreTask(task, userStats),
+  }));
+
+  // Sort by score descending
+  scoredTasks.sort((a, b) => b.aiPriority - a.aiPriority);
+
+  // Optionally: Add insights and recommendations
+  scoredTasks.forEach((task, index) => {
+    task.aiRank = index + 1;
+    task.aiInsights = {
+      priorityReason: `Ranked #${index + 1} due to high urgency/importance`,
+      isUrgent: task.aiPriority > 0.9,
+      isOverdue: task.dueDate ? new Date(task.dueDate) < new Date() : false,
+      requiresFocus: task.aiPriority > 0.8 && !task.completed,
+    };
+  });
+
+  return scoredTasks;
+}
+
 // ✅ GET all tasks for a specific user
 const getTasks = async (req, res) => {
   try {
@@ -87,7 +155,9 @@ const getPrioritizedTasks = async (req, res) => {
             totalTasks: 0,
             completedTasks: tasks.filter(t => t.completed).length,
             urgentTasks: 0,
-            timeOptimizedTasks: 0
+            overdueTasks: 0,
+            timeOptimizedTasks: 0,
+            focusRecommended: 0
           }
         }
       });
@@ -121,7 +191,24 @@ const getPrioritizedTasks = async (req, res) => {
     await aiController.prioritizeTasks(prioritizationRequest, mockRes);
 
     if (!prioritizationResult) {
-      throw new Error('AI prioritization failed');
+      // If AI controller failed or returned nothing, fall back to a local enhanced prioritization
+      console.warn('⚠️ AI prioritization returned no result - falling back to local enhancedPrioritizeTasks');
+      // Build a simple userStats object from tasks
+      const tasksCompletedCount = tasks.filter(t => t.completed).length;
+      const totalTasksCount = tasks.length;
+      const xpEarned = tasks.reduce((sum, t) => sum + (t.points || 0), 0);
+      const currentStreak = await calculateUserStreak(userId);
+      const userStats = {
+        tasksCompleted: tasksCompletedCount,
+        totalTasks: totalTasksCount,
+        currentStreak,
+        xpEarned,
+        goalsProgress: totalTasksCount > 0 ? Math.round((tasksCompletedCount / totalTasksCount) * 100) : 0
+      };
+
+      // Use local enhanced prioritization as fallback
+      const fallbackPrioritized = enhancedPrioritizeTasks(activeTasks, userStats);
+      prioritizationResult = { prioritizedTasks: fallbackPrioritized };
     }
 
     // Enhance tasks with additional metadata
@@ -374,21 +461,29 @@ const getUserStats = async (req, res) => {
       
     let tasksCompleted = 0;
     let totalTasks = 0;
+    let activeTasks = 0;
     let xpEarned = 0;
     const today = new Date().toDateString();
     
     snapshot.forEach(doc => {
       const task = doc.data();
-      totalTasks++;
       
       if (task.isDaily) {
-        // For daily tasks, check if completed today
+        // For daily tasks, always count as active
+        activeTasks++;
+        totalTasks++;
+        // Check if completed today
         if (task.completedDates && task.completedDates.includes(today)) {
           tasksCompleted++;
           xpEarned += task.points || 0;
         }
       } else {
-        // For regular tasks, check if completed
+        // For regular tasks, only count if not completed
+        if (!task.completed) {
+          activeTasks++;
+        }
+        totalTasks++;
+        // Check if completed
         if (task.completed) {
           tasksCompleted++;
           xpEarned += task.points || 0;
@@ -402,7 +497,8 @@ const getUserStats = async (req, res) => {
 
     const stats = {
       tasksCompleted,
-      totalTasks,
+      totalTasks, // Lifetime total (including completed)
+      activeTasks, // Current active tasks only
       currentStreak,
       xpEarned,
       goalsProgress
