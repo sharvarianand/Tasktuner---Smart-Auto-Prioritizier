@@ -2100,13 +2100,15 @@ const Tasks = () => {
                       <label className="text-xs text-muted-foreground">Before reminder</label>
                       <Select
                         value={editingTask.reminders?.before?.toString() || "0"}
-                        onValueChange={(value) => setEditingTask({
-                          ...editingTask, 
-                          reminders: {
-                            before: parseInt(value),
-                            after: editingTask.reminders?.after || 0
-                          }
-                        })}
+                        onValueChange={(value) => {
+                          setEditingTask({
+                            ...editingTask, 
+                            reminders: {
+                              before: parseInt(value),
+                              after: editingTask.reminders?.after || 0
+                            }
+                          });
+                        }}
                       >
                         <SelectTrigger>
                           <SelectValue />
@@ -2125,13 +2127,15 @@ const Tasks = () => {
                       <label className="text-xs text-muted-foreground">After end (minutes)</label>
                       <Select 
                         value={editingTask.reminders?.after?.toString() || '0'} 
-                        onValueChange={(value) => setEditingTask({
-                          ...editingTask, 
-                          reminders: {
-                            before: editingTask.reminders?.before || 15, 
-                            after: parseInt(value)
-                          }
-                        })}
+                        onValueChange={(value) => {
+                          setEditingTask({
+                            ...editingTask, 
+                            reminders: {
+                              before: editingTask.reminders?.before || 15, 
+                              after: parseInt(value)
+                            }
+                          });
+                        }}
                       >
                         <SelectTrigger>
                           <SelectValue />

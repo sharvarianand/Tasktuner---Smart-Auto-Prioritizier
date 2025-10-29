@@ -33,4 +33,5 @@
 # Environment variables (set these in Netlify dashboard)
 [build.environment]
   NODE_VERSION = "18"
-  NPM_FLAGS = "--force"
+  NPM_FLAGS = "--legacy-peer-deps"
+  CI = "false"
